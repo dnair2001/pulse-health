@@ -1,0 +1,23 @@
+<div class="shell">
+  <header class="shell__header">
+    <div class="shell__brand">
+      <span class="shell__logo" aria-hidden="true">◆</span>
+      <span class="shell__name">Pulse Health</span>
+      <span class="shell__tag">Patient portal</span>
+    </div>
+    <nav class="shell__nav">
+      <a routerLink="/appointments" routerLinkActive="shell__link--active" class="shell__link">
+        Appointments
+      </a>
+    </nav>
+    <div class="shell__patient" data-testid="patient-name">{{ patientName }}</div>
+  </header>
+
+  <main class="shell__main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="shell__footer">
+    Pulse Health demo environment. Data resets when the mock API store is cleared.
+  </footer>
+</div>

@@ -1,0 +1,13 @@
+<div class="empty-state" data-testid="empty-state">
+  <h3 class="empty-state__title">{{ title }}</h3>
+  <p class="empty-state__message" *ngIf="message">{{ message }}</p>
+  <button
+    type="button"
+    class="button button--primary"
+    *ngIf="actionLabel"
+    (click)="action.emit()"
+    data-testid="empty-state-action"
+  >
+    {{ actionLabel }}
+  </button>
+</div>

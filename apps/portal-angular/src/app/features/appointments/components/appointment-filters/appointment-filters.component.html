@@ -1,0 +1,27 @@
+<form class="filters" [formGroup]="form" *ngIf="form" data-testid="appointment-filters">
+  <label class="field">
+    <span class="field__label">Status</span>
+    <select formControlName="status" [attr.disabled]="disabled ? '' : null" data-testid="filter-status">
+      <option value="">All statuses</option>
+      <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+    </select>
+  </label>
+
+  <label class="field">
+    <span class="field__label">Visit type</span>
+    <select
+      formControlName="visitType"
+      [attr.disabled]="disabled ? '' : null"
+      data-testid="filter-visit-type"
+    >
+      <option value="">All visit types</option>
+      <option *ngFor="let visitType of visitTypes" [value]="visitType.id">
+        {{ visitType.label }}
+      </option>
+    </select>
+  </label>
+
+  <button type="button" class="button button--ghost" (click)="reset()" data-testid="filter-reset">
+    Clear filters
+  </button>
+</form>

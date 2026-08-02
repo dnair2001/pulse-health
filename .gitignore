@@ -18,3 +18,7 @@ __pycache__/
 .DS_Store
 *.swp
 .idea/
+
+# Mock API runtime store (rebuilt from seed whenever it is missing)
+apps/mock-api/data/store.json
+apps/mock-api/data/*.tmp

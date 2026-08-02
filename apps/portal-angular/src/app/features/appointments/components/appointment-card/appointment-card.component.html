@@ -1,0 +1,54 @@
+<article class="card appointment" [attr.data-testid]="'appointment-' + appointment.id">
+  <header class="appointment__header">
+    <div>
+      <h3 class="appointment__provider">{{ appointment.provider.name }}</h3>
+      <p class="appointment__specialty">
+        {{ appointment.provider.specialty }} · {{ appointment.provider.locationName }}
+      </p>
+    </div>
+    <ph-status-badge [status]="appointment.status"></ph-status-badge>
+  </header>
+
+  <dl class="appointment__details">
+    <div>
+      <dt>When</dt>
+      <dd data-testid="appointment-when">
+        {{ appointment.startsAt | date: 'EEE d MMM y, HH:mm' }} –
+        {{ appointment.endsAt | date: 'HH:mm' }}
+      </dd>
+    </div>
+    <div>
+      <dt>Visit type</dt>
+      <dd>{{ appointment.visitType | visitTypeLabel }}</dd>
+    </div>
+    <div>
+      <dt>Reason</dt>
+      <dd>{{ appointment.reason }}</dd>
+    </div>
+  </dl>
+
+  <footer class="appointment__actions" *ngIf="appointment.status === 'scheduled'">
+    <button
+      type="button"
+      class="button button--ghost"
+      [disabled]="!canModify"
+      (click)="rescheduleRequested.emit(appointment)"
+      [attr.data-testid]="'reschedule-' + appointment.id"
+    >
+      Reschedule
+    </button>
+    <button
+      type="button"
+      class="button button--danger"
+      [disabled]="!canModify"
+      (click)="cancelRequested.emit(appointment)"
+      [attr.data-testid]="'cancel-' + appointment.id"
+    >
+      Cancel
+    </button>
+  </footer>
+
+  <p class="appointment__blocked" *ngIf="cancelBlockedReason" data-testid="cancel-blocked">
+    {{ cancelBlockedReason }}
+  </p>
+</article>

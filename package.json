@@ -1,0 +1,25 @@
+{
+  "name": "pulse-health",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pulse Health patient portal: legacy Angular baseline plus a mock HTTP API",
+  "scripts": {
+    "setup": "npm run setup:api && npm run setup:web",
+    "setup:api": "cd apps/mock-api && python3 -m venv .venv && .venv/bin/pip install --upgrade pip --quiet && .venv/bin/pip install -r requirements-dev.txt",
+    "setup:web": "npm --prefix apps/portal-angular install",
+    "start": "concurrently -n api,web -c magenta,cyan \"npm:start:api\" \"npm:start:web\"",
+    "start:api": "cd apps/mock-api && .venv/bin/uvicorn app.main:app --reload --port 8000",
+    "start:web": "npm --prefix apps/portal-angular start",
+    "test": "npm run test:api && npm run test:web",
+    "test:api": "cd apps/mock-api && .venv/bin/pytest",
+    "test:web": "npm --prefix apps/portal-angular run test:ci",
+    "lint": "npm run lint:api && npm run lint:web",
+    "lint:api": "cd apps/mock-api && .venv/bin/ruff check .",
+    "lint:web": "npm --prefix apps/portal-angular run lint",
+    "build": "npm --prefix apps/portal-angular run build",
+    "reset:data": "curl -fsS -X POST http://localhost:8000/api/dev/reset && echo"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

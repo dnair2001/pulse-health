@@ -1,0 +1,12 @@
+<div [class]="cssClass" [attr.role]="role" [attr.data-variant]="variant" data-testid="alert-banner">
+  <span class="alert__message">{{ message }}</span>
+  <button
+    type="button"
+    class="alert__dismiss"
+    *ngIf="dismissible"
+    aria-label="Dismiss"
+    (click)="dismissed.emit()"
+  >
+    ×
+  </button>
+</div>

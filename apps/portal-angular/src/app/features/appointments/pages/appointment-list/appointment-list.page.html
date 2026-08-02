@@ -1,0 +1,115 @@
+<section class="page">
+  <header class="page__header">
+    <div>
+      <h1 class="page__title">Your appointments</h1>
+      <p class="page__subtitle">Review upcoming visits or look back at past care.</p>
+    </div>
+    <button
+      type="button"
+      class="button button--primary"
+      (click)="goToSchedule()"
+      data-testid="schedule-cta"
+    >
+      Schedule appointment
+    </button>
+  </header>
+
+  <ph-alert-banner
+    *ngIf="banner"
+    [variant]="banner.variant"
+    [message]="banner.text"
+    (dismissed)="dismissBanner()"
+  ></ph-alert-banner>
+
+  <nav class="tabs" role="tablist">
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.tab--active]="scope === 'upcoming'"
+      [attr.aria-selected]="scope === 'upcoming'"
+      (click)="selectScope('upcoming')"
+      data-testid="tab-upcoming"
+    >
+      Upcoming
+    </button>
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.tab--active]="scope === 'past'"
+      [attr.aria-selected]="scope === 'past'"
+      (click)="selectScope('past')"
+      data-testid="tab-past"
+    >
+      Past
+    </button>
+  </nav>
+
+  <ph-appointment-filters
+    [visitTypes]="visitTypes"
+    [disabled]="loading"
+    (filtersChanged)="onFiltersChanged($event)"
+  ></ph-appointment-filters>
+
+  <ph-loading-spinner *ngIf="loading" message="Loading your appointments…"></ph-loading-spinner>
+
+  <div class="stack" *ngIf="error && !loading">
+    <ph-alert-banner
+      [variant]="'error'"
+      [message]="error.message"
+      [dismissible]="false"
+    ></ph-alert-banner>
+    <button type="button" class="button button--ghost" (click)="load()" data-testid="retry">
+      Try again
+    </button>
+  </div>
+
+  <ph-empty-state
+    *ngIf="isEmpty && hasActiveFilters"
+    title="No appointments match these filters"
+    message="Clear the filters to see everything in this list."
+  ></ph-empty-state>
+
+  <ph-empty-state
+    *ngIf="isEmpty && !hasActiveFilters && scope === 'upcoming'"
+    title="No upcoming appointments"
+    message="When you book a visit it will show up here."
+    actionLabel="Schedule appointment"
+    (action)="goToSchedule()"
+  ></ph-empty-state>
+
+  <ph-empty-state
+    *ngIf="isEmpty && !hasActiveFilters && scope === 'past'"
+    title="No past appointments"
+    message="Completed and cancelled visits will appear here."
+  ></ph-empty-state>
+
+  <div class="stack" *ngIf="!loading && !error && appointments.length > 0">
+    <ph-appointment-card
+      *ngFor="let appointment of appointments"
+      [appointment]="appointment"
+      (rescheduleRequested)="goToReschedule($event)"
+      (cancelRequested)="requestCancel($event)"
+    ></ph-appointment-card>
+  </div>
+
+  <ph-confirm-dialog
+    [open]="pendingCancel !== null"
+    [busy]="cancelling"
+    title="Cancel this appointment?"
+    [message]="
+      pendingCancel
+        ? 'This will free up your ' +
+          (pendingCancel.startsAt | date: 'EEE d MMM, HH:mm') +
+          ' slot with ' +
+          pendingCancel.provider.name +
+          '.'
+        : ''
+    "
+    confirmLabel="Yes, cancel it"
+    cancelLabel="Keep appointment"
+    (confirmed)="confirmCancel()"
+    (cancelled)="dismissCancel()"
+  ></ph-confirm-dialog>
+</section>

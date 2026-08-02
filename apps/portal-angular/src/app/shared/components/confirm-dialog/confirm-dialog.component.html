@@ -1,0 +1,32 @@
+<div class="dialog-backdrop" *ngIf="open">
+  <div
+    class="dialog"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="title"
+    data-testid="confirm-dialog"
+  >
+    <h2 class="dialog__title">{{ title }}</h2>
+    <p class="dialog__message" *ngIf="message">{{ message }}</p>
+    <div class="dialog__actions">
+      <button
+        type="button"
+        class="button button--ghost"
+        [disabled]="busy"
+        (click)="cancelled.emit()"
+        data-testid="confirm-cancel"
+      >
+        {{ cancelLabel }}
+      </button>
+      <button
+        type="button"
+        class="button button--danger"
+        [disabled]="busy"
+        (click)="confirmed.emit()"
+        data-testid="confirm-accept"
+      >
+        {{ busy ? 'Working…' : confirmLabel }}
+      </button>
+    </div>
+  </div>
+</div>

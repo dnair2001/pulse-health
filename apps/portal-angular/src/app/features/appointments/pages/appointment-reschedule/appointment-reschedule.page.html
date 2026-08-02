@@ -1,0 +1,68 @@
+<section class="page">
+  <header class="page__header">
+    <div>
+      <h1 class="page__title">Reschedule appointment</h1>
+      <p class="page__subtitle">Choose a new time. Your original slot is released once confirmed.</p>
+    </div>
+  </header>
+
+  <ph-loading-spinner *ngIf="loading" message="Loading appointment…"></ph-loading-spinner>
+
+  <ph-alert-banner
+    *ngIf="loadError"
+    [variant]="'error'"
+    [message]="loadError.message"
+    [dismissible]="false"
+  ></ph-alert-banner>
+
+  <ph-alert-banner
+    *ngIf="serverError"
+    [variant]="'error'"
+    [message]="serverError.message"
+    (dismissed)="serverError = null"
+  ></ph-alert-banner>
+
+  <ng-container *ngIf="appointment && !loading">
+    <div class="card" data-testid="current-appointment">
+      <h2 class="card__title">Current time</h2>
+      <p>
+        {{ appointment.startsAt | date: 'EEE d MMM y, HH:mm' }} with
+        {{ appointment.provider.name }} ({{ appointment.visitType | visitTypeLabel }})
+      </p>
+      <ph-status-badge [status]="appointment.status"></ph-status-badge>
+    </div>
+
+    <ph-alert-banner
+      *ngIf="!canReschedule"
+      [variant]="'info'"
+      [message]="'Only scheduled appointments can be rescheduled.'"
+      [dismissible]="false"
+    ></ph-alert-banner>
+
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" *ngIf="canReschedule">
+      <fieldset class="field">
+        <legend class="field__label">New time</legend>
+        <ph-slot-picker
+          formControlName="slotId"
+          [slots]="slots"
+          [loading]="loadingSlots"
+        ></ph-slot-picker>
+        <span class="field__error" *ngIf="form.controls['slotId'].touched && form.invalid">
+          Please choose a new time slot.
+        </span>
+      </fieldset>
+
+      <div class="form__actions">
+        <button type="button" class="button button--ghost" (click)="cancel()">Back</button>
+        <button
+          type="submit"
+          class="button button--primary"
+          [disabled]="submitting"
+          data-testid="submit-reschedule"
+        >
+          {{ submitting ? 'Rescheduling…' : 'Confirm new time' }}
+        </button>
+      </div>
+    </form>
+  </ng-container>
+</section>
