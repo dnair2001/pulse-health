@@ -1,0 +1,29 @@
+<h1 class="text-2xl font-semibold tracking-tight">Angular + FastAPI</h1>
+<p class="mt-2 text-slate-600">
+  The card below reads <code class="rounded bg-slate-200 px-1 py-0.5 text-sm">/api/health</code> from
+  the FastAPI backend through the dev-server proxy.
+</p>
+
+<div class="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+  @if (health(); as h) {
+    <div class="flex items-center gap-2">
+      <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+      <span class="font-medium">Backend {{ h.status }}</span>
+    </div>
+    <dl class="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm text-slate-600">
+      <dt>Service</dt>
+      <dd>{{ h.service }}</dd>
+      <dt>Version</dt>
+      <dd>{{ h.version }}</dd>
+      <dt>Time</dt>
+      <dd>{{ h.time }}</dd>
+    </dl>
+  } @else if (error()) {
+    <div class="flex items-center gap-2">
+      <span class="h-2 w-2 rounded-full bg-red-500"></span>
+      <span class="font-medium">{{ error() }}</span>
+    </div>
+  } @else {
+    <p class="text-slate-500">Checking backend…</p>
+  }
+</div>
