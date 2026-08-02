@@ -8,5 +8,5 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('webapp');
+  protected readonly title = signal('pulse-health');
 }

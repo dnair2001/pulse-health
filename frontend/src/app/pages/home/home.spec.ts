@@ -25,7 +25,7 @@ describe('Home', () => {
 
     httpMock.expectOne('/api/health').flush({
       status: 'ok',
-      service: 'webapp-api',
+      service: 'pulse-health-api',
       version: '0.1.0',
       time: '2026-01-01T00:00:00Z'
     });

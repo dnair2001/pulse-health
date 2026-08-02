@@ -1,6 +1,6 @@
-# webapp
+# pulse-health
 
-Angular frontend and FastAPI backend in one repository. Working title, rename when you pick a name.
+Angular frontend and FastAPI backend in one repository.
 
 ## Stack
 
@@ -32,6 +32,9 @@ make install
 ```
 
 Requires Node 22+ and Python 3.12+.
+
+The backend virtualenv hardcodes absolute paths, so after moving or renaming
+the repository run `make install-backend` again.
 
 ## Run
 
