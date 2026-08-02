@@ -81,6 +81,16 @@ npm run setup   # backend venv + Angular dependencies
 The Angular dev server proxies `/api` to the API, so the browser sees one origin and CORS does
 not apply in development.
 
+### Viewing it from another machine
+
+The dev server binds `0.0.0.0` so it is reachable when the app runs on a remote host or container
+and you browse from your own machine over a forwarded port.
+
+Live reload holds a websocket open for the lifetime of the page, and some tunnels handle that
+badly: the first page load succeeds and every request after it hangs. If that happens, serve a
+compiled bundle over plain HTTP instead of forwarding the dev server.</new_str>
+
+
 ## Demo script
 
 ```bash
