@@ -1,11 +1,18 @@
 # Pulse Health
 
-Patient portal for a fictional digital healthcare company, built as a **legacy baseline**: an
-Angular 17 NgModule application plus a mock HTTP API. One patient-facing feature is complete
-end to end, Appointment Scheduling.
+Patient portal for a fictional digital healthcare company, used to show a legacy frontend being
+modernised. One patient-facing feature, Appointment Scheduling, is complete end to end in **two
+frontends** against **one backend**:
 
-The REST contract in [`docs/api-contract.md`](docs/api-contract.md) is frozen so a future React
-frontend can consume the same API without touching the backend.
+| App | What it is |
+| --- | --- |
+| `apps/portal-angular` | the legacy baseline: Angular 17 NgModules, RxJS, Karma |
+| `apps/portal-react` | the migration target: React 19, Vite, TanStack Query, Vitest |
+| `apps/mock-api` | FastAPI mock, shared by both, unchanged by the migration |
+
+The REST contract in [`docs/api-contract.md`](docs/api-contract.md) is frozen, which is what let
+the React port land without a single backend change. Both frontends render the same markup, reuse
+the same stylesheet and keep the same `data-testid` values, so their output is byte-identical.
 
 ## Stack
 
@@ -36,6 +43,16 @@ pulse-health/
 │   │       └── features/appointments/
 │   │           ├── appointments.module.ts + appointments-routing.module.ts
 │   │           ├── services/    appointments, providers, slots (HttpClient)
+│   │           ├── pages/       list, schedule, reschedule
+│   │           └── components/  appointment card, filters, slot picker
+│   ├── portal-react/            React 19 port of the same feature
+│   │   ├── vite.config.ts       /api -> localhost:8000, dev server on :4300
+│   │   └── src/
+│   │       ├── api/             typed client, endpoints, query hooks, error normalisation
+│   │       ├── shared/          the same five primitives, date helpers, visit-type label
+│   │       ├── notifications/   notification provider
+│   │       └── features/appointments/
+│   │           ├── AppointmentsRoutes.tsx + appointmentSchema.ts
 │   │           ├── pages/       list, schedule, reschedule
 │   │           └── components/  appointment card, filters, slot picker
 │   └── mock-api/                FastAPI mock
@@ -69,27 +86,43 @@ npm run setup   # backend venv + Angular dependencies
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | API on :8000 and Angular on :4200 together |
+| `npm start` | all three: API on :8000, Angular on :4200, React on :4300 |
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
-| `npm run start:web` | `ng serve`, http://localhost:4200 |
-| `npm test` | pytest then Karma (96 + 42 tests) |
-| `npm run test:api` / `npm run test:web` | one side only |
-| `npm run lint` | ruff then eslint |
-| `npm run build` | production Angular build |
+| `npm run start:angular` | `ng serve`, http://localhost:4200 |
+| `npm run start:react` | `vite`, http://localhost:4300 |
+| `npm test` | all three suites (96 + 42 + 62 tests) |
+| `npm run test:api` / `test:angular` / `test:react` | one suite only |
+| `npm run lint` | ruff, then eslint, then oxlint |
+| `npm run build` | production bundles for both frontends |
+| `npm run demo` | build both frontends and serve them with the API on one port |
 | `npm run reset:data` | reseed the API store while it is running |
 
-The Angular dev server proxies `/api` to the API, so the browser sees one origin and CORS does
-not apply in development.
+Both dev servers proxy `/api` to the API, so the browser sees one origin and CORS does not apply
+in development.
 
-### Viewing it from another machine
+### Viewing both apps from another machine
 
-The dev server binds `0.0.0.0` so it is reachable when the app runs on a remote host or container
-and you browse from your own machine over a forwarded port.
+When the repo runs on a remote host or container and you browse from your own machine, use:
 
-Live reload holds a websocket open for the lifetime of the page, and some tunnels handle that
-badly: the first page load succeeds and every request after it hangs. If that happens, serve a
-compiled bundle over plain HTTP instead of forwarding the dev server.</new_str>
+```bash
+npm run start:api    # in one shell, if it is not already running
+npm run demo         # in another: builds both bundles, serves on :8080
+```
 
+Forward the single port (`8080`) and open:
+
+| URL | App |
+| --- | --- |
+| http://localhost:8080/appointments | Angular |
+| http://localhost:8080/react/appointments | React |
+
+One port means one tunnel, and both apps share the same API and store, so a booking made in one
+shows up in the other on refresh.
+
+Prefer this over forwarding the dev servers. Live reload holds a websocket open for the lifetime
+of the page and some tunnels handle that badly: the first page load succeeds and every request
+after it hangs. `npm run demo` serves compiled bundles over plain HTTP, so every connection is
+short-lived. It also has no file watcher, so rerun `npm run demo:build` after changing code.
 
 ## Demo script
 
@@ -160,6 +193,10 @@ npm test
 - **API, 96 tests.** Every rule and error code, filter and ordering behaviour, the error envelope
   shape for malformed bodies, slot freeing on cancel and swapping on reschedule, and persistence
   across a store reload.
+- **React, 62 tests.** The same ground as the Angular suite in the React idiom: the client's error
+  normalisation and query-string building, query-key isolation and cache invalidation, the shared
+  primitives and date helpers, the three components, and the three pages including the orderings
+  that keep a page banner and a field-level server error from disagreeing. Green under any `TZ`.
 - **Angular, 42 tests.** Service URLs and query params, the error interceptor's normalisation
   including network failure, the `ControlValueAccessor` slot picker, reactive form validation,
   the pipe and validator, plus component tests for the list page (loading, empty, filtered
