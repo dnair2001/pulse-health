@@ -1,0 +1,19 @@
+{
+  "path": ["apps/mock-api/app", "apps/portal-angular/src", "apps/portal-react/src"],
+  "format": ["python", "typescript", "markup"],
+  "ignore": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/dist-demo/**",
+    "**/*.d.ts",
+    "apps/portal-react/src/styles/global.scss",
+    "apps/portal-angular/src/styles.scss",
+    "apps/portal-angular/src/app/app.component.scss"
+  ],
+  "reporters": ["console"],
+  "gitignore": true,
+  "threshold": 3
+}

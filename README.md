@@ -34,9 +34,11 @@ pulse-health/
 ├── package.json                 root commands (dev, test, lint, typecheck, build, demo)
 ├── AGENTS.md                    invariants and conventions for agents and newcomers
 ├── docs/api-contract.md         frozen REST contract
-├── .github/workflows/           CI per app, secret scan, nightly flaky-test detection
+├── docs/privacy.md              what happens to data in this demo (no real PHI)
+├── .jscpd.json                  duplicate-code budget across all three apps
+├── .github/workflows/           CI per app, CodeQL, Droid auto-review, secret scan, flaky-test detection
 ├── .devcontainer/               Node 22 + Python 3.12, runs npm run setup on create
-├── .pre-commit-config.yaml      ruff, mypy, oxlint, eslint, prettier, hygiene hooks
+├── .pre-commit-config.yaml      ruff, mypy, vulture, oxlint, eslint, knip, jscpd, prettier, hygiene hooks
 ├── e2e/                         Playwright specs driving both frontends on one port
 ├── apps/
 │   ├── portal-angular/          Angular 17 patient portal
@@ -64,6 +66,7 @@ pulse-health/
 │       ├── app/domain/          models, rules, error envelope
 │       ├── app/api/             health, providers, visit types, slots, appointments, dev
 │       ├── app/observability/   JSON logs, Prometheus /metrics, OpenTelemetry traces
+│       ├── prometheus/alerts.yml  alerting rules for the metrics above (validated, not wired up)
 │       ├── app/store.py         atomic file-backed persistence
 │       ├── demo_server.py       both built frontends + the API on one port
 │       └── data/store.json      runtime state (gitignored, reseeds when missing)
@@ -206,18 +209,19 @@ npm test
   log line's shape, the log scrubber's allowlist, and POST /api/telemetry's validation and
   logging/metrics fan-out, and two tests that pin the `/api` payload and error-envelope shapes so
   the frozen contract cannot drift.
-- **React, 83 tests.** The same ground as the Angular suite in the React idiom: the client's error
+- **React, 86 tests.** The same ground as the Angular suite in the React idiom: the client's error
   normalisation and query-string building (plus the `X-Request-Id` header, the query retry
-  predicate, and reporting failures to `/api/telemetry`), query-key isolation and cache
-  invalidation, the shared primitives and date helpers, the three components, and the three pages
-  including the orderings that keep a page banner and a field-level server error from
-  disagreeing. Green under any `TZ`.
-- **Angular, 63 tests.** Service URLs and query params, the error interceptor's normalisation
+  predicate, and reporting failures to `/api/telemetry` bounded to `error.name`, never the raw
+  exception message), query-key isolation and cache invalidation, the shared primitives and date
+  helpers, the three components, and the three pages including the orderings that keep a page
+  banner and a field-level server error from disagreeing. Green under any `TZ`.
+- **Angular, 64 tests.** Service URLs and query params, the error interceptor's normalisation
   including network failure, the `X-Request-Id` header it stamps, and reporting failures to
-  `/api/telemetry`, the global `ErrorHandler`, the `ControlValueAccessor` slot picker, reactive
-  form validation, the pipe and validator, plus component tests for the list page (loading, empty,
-  filtered empty, error with retry, cancel confirmation accepted and dismissed, cancel rejection)
-  and the schedule page (validation, submission, server error mapping, availability refresh).
+  `/api/telemetry` bounded to `error.name`, the global `ErrorHandler`, the `ControlValueAccessor`
+  slot picker, reactive form validation, the pipe and validator, plus component tests for the list
+  page (loading, empty, filtered empty, error with retry, cancel confirmation accepted and
+  dismissed, cancel rejection) and the schedule page (validation, submission, server error
+  mapping, availability refresh).
 
 ```bash
 npm run test:e2e

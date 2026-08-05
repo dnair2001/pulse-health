@@ -30,7 +30,22 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF", "C90"]
+
+[tool.ruff.lint.mccabe]
+# Measured baseline (`ruff check --select C90 .` with no override): zero violations at
+# the ruff default threshold of 10, so the default is kept explicit here rather than
+# loosened to accommodate anything -- any function crossing this bar should be refactored.
+max-complexity = 10
+
+[tool.vulture]
+# Measured baseline (`vulture app --min-confidence 60`): every hit below 80% confidence is a
+# FastAPI/Pydantic framework-required symbol (route handlers only called by the router, Pydantic
+# `model_config`/field declarations only read by the framework, exception handlers registered via
+# decorator). None are real dead code, so confidence is raised to 80 -- where the run is already
+# clean -- instead of hand-whitelisting every framework pattern.
+paths = ["app"]
+min_confidence = 80
 
 [tool.mypy]
 python_version = "3.12"

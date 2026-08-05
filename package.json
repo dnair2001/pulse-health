@@ -36,12 +36,15 @@
     "build:react": "npm --prefix apps/portal-react run build",
     "reset:data": "curl -fsS -X POST http://localhost:8000/api/dev/reset && echo",
     "generate:openapi": "cd apps/mock-api && PYTHONPATH=. .venv/bin/python scripts/generate_openapi.py",
+    "check:doc-freshness": "node scripts/check-test-count-freshness.mjs",
     "demo": "npm run demo:build && npm run demo:serve",
     "demo:build": "npm run build:angular && npm --prefix apps/portal-react run build:demo",
-    "demo:serve": "cd apps/mock-api && .venv/bin/uvicorn demo_server:app --host 0.0.0.0 --port 8080"
+    "demo:serve": "cd apps/mock-api && .venv/bin/uvicorn demo_server:app --host 0.0.0.0 --port 8080",
+    "check:duplication": "jscpd -c .jscpd.json"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "jscpd": "^5.0.14",
     "prettier": "^3.6.2"
   }
 }

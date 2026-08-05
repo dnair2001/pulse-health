@@ -58,7 +58,7 @@ function formatYear(year: number): string {
  * Mirrors Angular's `toDate`. The important part is that bare `YYYY-MM-DD` keys become local
  * midnight rather than the UTC midnight `new Date('2024-05-01')` would produce.
  */
-export function parseDate(value: Date | string | number): Date {
+function parseDate(value: Date | string | number): Date {
   if (value instanceof Date) {
     return value;
   }
