@@ -21,7 +21,7 @@ jobs:
       matrix:
         language: [python, javascript-typescript]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # No root npm workspace exists (each frontend has its own package-lock.json), so
       # CodeQL's JS/TS autobuild has nothing to build against and would otherwise only get
@@ -29,7 +29,7 @@ jobs:
       # node_modules before the JS/TS analyze step lets the extractor resolve imports and
       # types properly; it's a no-op for the python matrix leg since only .py sources exist
       # for that language pass.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: matrix.language == 'javascript-typescript'
         with:
           node-version-file: .nvmrc
