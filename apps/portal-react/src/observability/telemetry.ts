@@ -45,6 +45,18 @@ export function reportEvent(
   }
 }
 
+/**
+ * Bounds an uncaught exception/rejection down to its `name` before it ever reaches
+ * `reportEvent`. Deliberately never returns `.message`: that's free text describing
+ * whatever failed, and in a patient-data app it can echo user-entered content (e.g. a
+ * JSON.parse SyntaxError quoting a fragment of the bad input). `.name` is a small,
+ * code-controlled value -- a built-in (TypeError, RangeError, ...) or one of our own
+ * classes, never user data -- and is enough to triage by.
+ */
+export function errorName(value: unknown, fallback: string): string {
+  return value instanceof Error ? value.name : fallback;
+}
+
 export function checkApiHealth(): void {
   try {
     fetch('/api/health')

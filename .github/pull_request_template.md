@@ -12,7 +12,7 @@ Definition of done (see [AGENTS.md](../AGENTS.md)):
 
 - [ ] `npm run lint` passes
 - [ ] `npm run typecheck` and `npm run format:check` pass
-- [ ] `npm test` passes (133 pytest + 63 Karma + 83 Vitest = 279)
+- [ ] `npm test` passes (133 pytest + 64 Karma + 86 Vitest = 283)
 - [ ] `npm run build` passes
 - [ ] `TZ=America/New_York npm run test:react` passes — non-UTC runs have caught real
       date-formatting bugs that `TZ=UTC` hid

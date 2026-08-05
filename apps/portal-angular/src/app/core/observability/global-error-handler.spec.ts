@@ -32,25 +32,37 @@ describe('GlobalErrorHandler', () => {
     expect(consoleSpy).toHaveBeenCalledWith(error);
   });
 
-  it('reports an Error instance using its message', () => {
+  it('reports an Error instance using its name, never its message', () => {
     spyOn(console, 'error');
 
-    handler.handleError(new Error('kaboom'));
+    handler.handleError(new Error('kaboom, patient reason: knee pain'));
 
-    expect(telemetry.reportEvent).toHaveBeenCalledWith('error', 'kaboom', {
+    expect(telemetry.reportEvent).toHaveBeenCalledWith('error', 'Error', {
       route: '/appointments',
       errorCode: 'UNCAUGHT_EXCEPTION',
     });
   });
 
-  it('stringifies non-Error values defensively', () => {
+  it("reports a built-in error subclass's own name", () => {
     spyOn(console, 'error');
 
-    handler.handleError('a plain string failure');
+    handler.handleError(new TypeError('Cannot read properties of undefined'));
 
     expect(telemetry.reportEvent).toHaveBeenCalledWith(
       'error',
-      'a plain string failure',
+      'TypeError',
+      jasmine.objectContaining({ errorCode: 'UNCAUGHT_EXCEPTION' }),
+    );
+  });
+
+  it('never forwards a non-Error value verbatim, in case it embeds user input', () => {
+    spyOn(console, 'error');
+
+    handler.handleError('a plain string failure that happens to include free text');
+
+    expect(telemetry.reportEvent).toHaveBeenCalledWith(
+      'error',
+      'UnknownError',
       jasmine.objectContaining({ errorCode: 'UNCAUGHT_EXCEPTION' }),
     );
   });
@@ -68,7 +80,7 @@ describe('GlobalErrorHandler', () => {
     } as Injector);
 
     expect(() => bareHandler.handleError(new Error('kaboom'))).not.toThrow();
-    expect(telemetry.reportEvent).toHaveBeenCalledWith('error', 'kaboom', {
+    expect(telemetry.reportEvent).toHaveBeenCalledWith('error', 'Error', {
       route: undefined,
       errorCode: 'UNCAUGHT_EXCEPTION',
     });
