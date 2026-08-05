@@ -97,7 +97,7 @@ npm run setup   # backend venv + Angular dependencies
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
 | `npm run start:angular` | `ng serve`, http://localhost:4200 |
 | `npm run start:react` | `vite`, http://localhost:4300 |
-| `npm test` | all three unit suites (133 + 63 + 83 = 279 tests) |
+| `npm test` | all three unit suites (133 + 64 + 86 = 283 tests) |
 | `npm run test:api` / `test:angular` / `test:react` | one suite only |
 | `npm run test:e2e` | 25 Playwright specs driving both frontends in a real browser |
 | `npm run lint` | ruff, then eslint, then oxlint |

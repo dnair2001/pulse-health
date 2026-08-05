@@ -21,11 +21,16 @@ export class GlobalErrorHandler implements ErrorHandler {
   handleError(error: unknown): void {
     console.error(error);
 
-    const message = error instanceof Error ? error.message : String(error);
+    // Deliberately never forward error.message to telemetry: it is free text describing
+    // whatever failed, and in a patient-data app it can echo user-entered content (e.g. a
+    // JSON.parse SyntaxError quoting a fragment of the bad input). error.name is a small,
+    // code-controlled value -- a built-in (TypeError, RangeError, ...) or one of our own
+    // classes, never user data -- and is enough to triage by.
+    const name = error instanceof Error ? error.name : 'UnknownError';
     const telemetry = this.injector.get(TelemetryService);
     const route = this.injector.get(Router, null)?.url;
 
-    telemetry.reportEvent('error', message, {
+    telemetry.reportEvent('error', name, {
       route: route ?? undefined,
       errorCode: 'UNCAUGHT_EXCEPTION',
     });

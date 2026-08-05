@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { checkApiHealth, reportEvent } from './telemetry';
+import { checkApiHealth, errorName, reportEvent } from './telemetry';
 
 describe('reportEvent', () => {
   afterEach(() => {
@@ -81,6 +81,26 @@ describe('reportEvent', () => {
     globalThis.fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
 
     expect(() => reportEvent('error', 'boom')).not.toThrow();
+  });
+});
+
+describe('errorName', () => {
+  it("returns an Error's own name, never its message", () => {
+    expect(errorName(new Error('kaboom, patient reason: knee pain'), 'Error')).toBe('Error');
+  });
+
+  it("returns a built-in error subclass's own name", () => {
+    expect(errorName(new TypeError('Cannot read properties of undefined'), 'Error')).toBe(
+      'TypeError',
+    );
+  });
+
+  it('falls back to the given default for a non-Error value, in case it embeds user input', () => {
+    expect(
+      errorName('a plain string that happens to include free text', 'UnhandledRejection'),
+    ).toBe('UnhandledRejection');
+    expect(errorName(undefined, 'UnhandledRejection')).toBe('UnhandledRejection');
+    expect(errorName(null, 'Error')).toBe('Error');
   });
 });
 

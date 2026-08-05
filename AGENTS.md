@@ -31,7 +31,7 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 | Command | What it does |
 | --- | --- |
 | `npm start` | All three dev servers: API `:8000`, Angular `:4200`, React `:4300` |
-| `npm test` | Unit suite: 133 pytest + 63 Karma + 83 Vitest = **279** |
+| `npm test` | Unit suite: 133 pytest + 64 Karma + 86 Vitest = **283** |
 | `npm run test:e2e` | Builds, then runs the 25 Playwright specs against both frontends |
 | `npm run lint` | ruff + Angular eslint + oxlint |
 | `npm run typecheck` | mypy (strict) + Angular tsc + React tsc |
@@ -95,9 +95,13 @@ JSON logs and Prometheus registry (`pulse_frontend_events_total`, labels `source
 most 6 label combinations ever). Its request schema is deliberately closed (`source`, `level`,
 `message`, `route`, `requestId`, `errorCode`; no open-ended context object): the log scrubber
 above only guards field *names*, not the *content* of a value it already trusts, so an arbitrary
-`context: dict` here would be a way to tunnel free text past that guard. Both frontends call it
-through a small `reportEvent`/`checkApiHealth` module rather than posting to it directly — see
-`apps/portal-react/src/observability/telemetry.ts` and
+`context: dict` here would be a way to tunnel free text past that guard. `message` itself is the
+one field in that schema that is unavoidably free text on the server side, so both frontends
+bound it *before* it is ever sent: uncaught-exception handlers report `error.name` (a small,
+code-controlled value such as `TypeError`, never the exception's `.message`, which could echo
+user-entered content) — see `errorName()` in `telemetry.ts` and `GlobalErrorHandler` in Angular.
+Both frontends call the endpoint through a small `reportEvent`/`checkApiHealth` module rather than
+posting to it directly — see `apps/portal-react/src/observability/telemetry.ts` and
 `apps/portal-angular/src/app/core/observability/telemetry.service.ts`. Neither frontend has any
 *visible* UI for this (no banner, no status indicator): it's instrumentation only, kept that way
 so it can't put invariant 3 (byte-identical rendered text) at risk.
