@@ -6,7 +6,8 @@ is only the short version.
 
 ## Setup
 
-Requires Node 22+ and Python 3.12+. There is no devcontainer.
+Requires Node 22+ and Python 3.12+. A `.devcontainer/devcontainer.json` is provided if you'd
+rather build in a container than install these locally.
 
 ```bash
 npm install     # root tooling
@@ -20,7 +21,7 @@ Always use the root scripts rather than per-app invocations.
 | Command | What it does |
 | --- | --- |
 | `npm start` | All three dev servers: API `:8000`, Angular `:4200`, React `:4300` |
-| `npm test` | Full suite: 96 pytest + 42 Karma + 62 Vitest = 200 |
+| `npm test` | Full suite: 121 pytest + 45 Karma + 71 Vitest = 237 |
 | `npm run lint` | ruff + Angular eslint + oxlint |
 | `npm run build` | Production bundles for both frontends |
 | `npm run demo` | Builds, then serves both frontends + API on `:8080` |

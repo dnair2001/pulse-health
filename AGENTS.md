@@ -31,7 +31,7 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 | Command | What it does |
 | --- | --- |
 | `npm start` | All three dev servers: API `:8000`, Angular `:4200`, React `:4300` |
-| `npm test` | Unit suite: 116 pytest + 42 Karma + 62 Vitest = **220** |
+| `npm test` | Unit suite: 121 pytest + 45 Karma + 71 Vitest = **237** |
 | `npm run test:e2e` | Builds, then runs the 25 Playwright specs against both frontends |
 | `npm run lint` | ruff + Angular eslint + oxlint |
 | `npm run typecheck` | mypy (strict) + Angular tsc + React tsc |
@@ -39,6 +39,7 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 | `npm run build` | Production bundles for both frontends |
 | `npm run demo` | Builds, then serves **both** frontends + API on `:8080` |
 | `npm run reset:data` | Reseeds the mock API relative to now (needs the API running) |
+| `npm run generate:openapi` | Regenerates `apps/mock-api/openapi.json` from the live schema; CI fails if it's stale |
 
 Both frontends proxy `/api` to `localhost:8000`, so the API must be running for either to show
 data. Per-app variants exist for tight loops: `test:api`, `test:angular`, `test:react`, and the

@@ -64,6 +64,18 @@ jobs:
         working-directory: apps/mock-api
         run: pytest
 
+      # openapi.json is committed so an agent (or a human) can read the contract offline
+      # instead of needing a running server. This regenerates it and fails if the committed
+      # copy has drifted from the live schema, which is the only way it stays trustworthy.
+      - name: Check openapi.json is up to date
+        working-directory: apps/mock-api
+        run: |
+          PYTHONPATH=. python scripts/generate_openapi.py
+          git diff --exit-code -- openapi.json || {
+            echo "::error::openapi.json is stale. Run 'npm run generate:openapi' and commit the result."
+            exit 1
+          }
+
   angular:
     name: portal-angular (eslint + tsc + karma + build)
     runs-on: ubuntu-latest

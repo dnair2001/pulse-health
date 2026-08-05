@@ -1,0 +1,836 @@
+{
+  "components": {
+    "schemas": {
+      "Appointment": {
+        "properties": {
+          "cancellable": {
+            "title": "Cancellable",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "endsAt": {
+            "title": "Endsat",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/ProviderSummary"
+          },
+          "providerId": {
+            "title": "Providerid",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "slotId": {
+            "title": "Slotid",
+            "type": "string"
+          },
+          "startsAt": {
+            "title": "Startsat",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AppointmentStatus"
+          },
+          "updatedAt": {
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "visitType": {
+            "$ref": "#/components/schemas/VisitTypeId"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "provider",
+          "slotId",
+          "startsAt",
+          "endsAt",
+          "status",
+          "visitType",
+          "reason",
+          "cancellable",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "Appointment",
+        "type": "object"
+      },
+      "AppointmentStatus": {
+        "enum": [
+          "scheduled",
+          "completed",
+          "cancelled"
+        ],
+        "title": "AppointmentStatus",
+        "type": "string"
+      },
+      "CreateAppointmentRequest": {
+        "description": "Values are validated in app.domain.rules so every message is UI-ready.",
+        "properties": {
+          "providerId": {
+            "examples": [
+              "prv_001"
+            ],
+            "title": "Providerid",
+            "type": "string"
+          },
+          "reason": {
+            "examples": [
+              "Annual physical"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "slotId": {
+            "examples": [
+              "slt_prv_001_20260803T0900"
+            ],
+            "title": "Slotid",
+            "type": "string"
+          },
+          "visitType": {
+            "examples": [
+              "in_person",
+              "video",
+              "phone"
+            ],
+            "title": "Visittype",
+            "type": "string"
+          }
+        },
+        "required": [
+          "providerId",
+          "slotId",
+          "visitType",
+          "reason"
+        ],
+        "title": "CreateAppointmentRequest",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "time": {
+            "format": "date-time",
+            "title": "Time",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "service",
+          "version",
+          "time"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "Provider": {
+        "properties": {
+          "credentials": {
+            "title": "Credentials",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "locationName": {
+            "title": "Locationname",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "specialty": {
+            "title": "Specialty",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "specialty",
+          "credentials",
+          "locationName"
+        ],
+        "title": "Provider",
+        "type": "object"
+      },
+      "ProviderSummary": {
+        "description": "The provider projection embedded in an appointment; omits credentials.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "locationName": {
+            "title": "Locationname",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "specialty": {
+            "title": "Specialty",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "specialty",
+          "locationName"
+        ],
+        "title": "ProviderSummary",
+        "type": "object"
+      },
+      "RescheduleAppointmentRequest": {
+        "properties": {
+          "slotId": {
+            "examples": [
+              "slt_prv_001_20260804T0930"
+            ],
+            "title": "Slotid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slotId"
+        ],
+        "title": "RescheduleAppointmentRequest",
+        "type": "object"
+      },
+      "ResetResponse": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ResetResponse",
+        "type": "object"
+      },
+      "Slot": {
+        "properties": {
+          "endsAt": {
+            "title": "Endsat",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "isBooked": {
+            "default": false,
+            "title": "Isbooked",
+            "type": "boolean"
+          },
+          "providerId": {
+            "title": "Providerid",
+            "type": "string"
+          },
+          "startsAt": {
+            "title": "Startsat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "startsAt",
+          "endsAt"
+        ],
+        "title": "Slot",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VisitType": {
+        "properties": {
+          "durationMinutes": {
+            "title": "Durationminutes",
+            "type": "integer"
+          },
+          "id": {
+            "$ref": "#/components/schemas/VisitTypeId"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "durationMinutes"
+        ],
+        "title": "VisitType",
+        "type": "object"
+      },
+      "VisitTypeId": {
+        "enum": [
+          "in_person",
+          "video",
+          "phone"
+        ],
+        "title": "VisitTypeId",
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "title": "pulse-health-api",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/appointments": {
+      "get": {
+        "operationId": "list_appointments_api_appointments_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scope"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "visitType",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Visittype"
+            }
+          },
+          {
+            "in": "query",
+            "name": "providerId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Providerid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Appointment"
+                  },
+                  "title": "Response List Appointments Api Appointments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Appointments",
+        "tags": [
+          "appointments"
+        ]
+      },
+      "post": {
+        "operationId": "create_appointment_api_appointments_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppointmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Appointment",
+        "tags": [
+          "appointments"
+        ]
+      }
+    },
+    "/api/appointments/{appointment_id}": {
+      "get": {
+        "operationId": "get_appointment_api_appointments__appointment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appointment_id",
+            "required": true,
+            "schema": {
+              "title": "Appointment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Appointment",
+        "tags": [
+          "appointments"
+        ]
+      },
+      "patch": {
+        "operationId": "reschedule_appointment_api_appointments__appointment_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appointment_id",
+            "required": true,
+            "schema": {
+              "title": "Appointment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleAppointmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reschedule Appointment",
+        "tags": [
+          "appointments"
+        ]
+      }
+    },
+    "/api/appointments/{appointment_id}/cancel": {
+      "post": {
+        "operationId": "cancel_appointment_api_appointments__appointment_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appointment_id",
+            "required": true,
+            "schema": {
+              "title": "Appointment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Appointment",
+        "tags": [
+          "appointments"
+        ]
+      }
+    },
+    "/api/dev/reset": {
+      "post": {
+        "operationId": "reset_store_api_dev_reset_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Reset Store",
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/providers": {
+      "get": {
+        "operationId": "list_providers_api_providers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Provider"
+                  },
+                  "title": "Response List Providers Api Providers Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Providers",
+        "tags": [
+          "providers"
+        ]
+      }
+    },
+    "/api/slots": {
+      "get": {
+        "operationId": "list_slots_api_slots_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "providerId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Providerid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeBooked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Includebooked",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Slot"
+                  },
+                  "title": "Response List Slots Api Slots Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Slots",
+        "tags": [
+          "slots"
+        ]
+      }
+    },
+    "/api/visit-types": {
+      "get": {
+        "operationId": "list_visit_types_api_visit_types_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VisitType"
+                  },
+                  "title": "Response List Visit Types Api Visit Types Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Visit Types",
+        "tags": [
+          "visit-types"
+        ]
+      }
+    }
+  }
+}
