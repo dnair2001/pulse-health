@@ -4,10 +4,12 @@
   "private": true,
   "description": "Pulse Health patient portal: legacy Angular baseline, React port, and a mock HTTP API",
   "scripts": {
-    "setup": "npm run setup:api && npm run setup:angular && npm run setup:react",
+    "setup": "npm run setup:api && npm run setup:angular && npm run setup:react && npm run setup:e2e",
     "setup:api": "cd apps/mock-api && python3 -m venv .venv && .venv/bin/pip install --upgrade pip --quiet && .venv/bin/pip install -r requirements-dev.txt",
     "setup:angular": "npm --prefix apps/portal-angular install",
     "setup:react": "npm --prefix apps/portal-react install",
+    "setup:e2e": "npm --prefix e2e install && npm --prefix e2e run setup",
+    "setup:hooks": "apps/mock-api/.venv/bin/pre-commit install",
     "start": "concurrently -n api,angular,react -c magenta,red,cyan \"npm:start:api\" \"npm:start:angular\" \"npm:start:react\"",
     "start:api": "cd apps/mock-api && .venv/bin/uvicorn app.main:app --reload --port 8000",
     "start:angular": "npm --prefix apps/portal-angular start",
@@ -16,10 +18,18 @@
     "test:api": "cd apps/mock-api && .venv/bin/pytest",
     "test:angular": "npm --prefix apps/portal-angular run test:ci",
     "test:react": "npm --prefix apps/portal-react run test:ci",
+    "test:e2e": "npm run demo:build && npm run test:e2e:only",
+    "test:e2e:only": "npm --prefix e2e run test",
     "lint": "npm run lint:api && npm run lint:angular && npm run lint:react",
     "lint:api": "cd apps/mock-api && .venv/bin/ruff check .",
     "lint:angular": "npm --prefix apps/portal-angular run lint",
     "lint:react": "npm --prefix apps/portal-react run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck:api && npm run typecheck:angular && npm run typecheck:react",
+    "typecheck:api": "cd apps/mock-api && .venv/bin/mypy app",
+    "typecheck:angular": "npm --prefix apps/portal-angular run typecheck",
+    "typecheck:react": "npm --prefix apps/portal-react run typecheck",
     "build": "npm run build:angular && npm run build:react",
     "build:angular": "npm --prefix apps/portal-angular run build",
     "build:react": "npm --prefix apps/portal-react run build",
@@ -29,6 +39,7 @@
     "demo:serve": "cd apps/mock-api && .venv/bin/uvicorn demo_server:app --host 0.0.0.0 --port 8080"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "prettier": "^3.6.2"
   }
 }

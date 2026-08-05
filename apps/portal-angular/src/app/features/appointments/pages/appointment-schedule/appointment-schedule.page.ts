@@ -42,7 +42,7 @@ export class AppointmentSchedulePageComponent implements OnInit, OnDestroy {
     private readonly providersService: ProvidersService,
     private readonly slotsService: SlotsService,
     private readonly notifications: NotificationService,
-    private readonly router: Router
+    private readonly router: Router,
   ) {
     this.form = this.formBuilder.group({
       providerId: ['', Validators.required],
@@ -61,7 +61,7 @@ export class AppointmentSchedulePageComponent implements OnInit, OnDestroy {
         this.slots = [];
         this.serverError = null;
       }),
-      map((providerId) => String(providerId ?? ''))
+      map((providerId) => String(providerId ?? '')),
     );
 
     merge(providerChanges, this.slotRefresh.asObservable())
@@ -74,10 +74,10 @@ export class AppointmentSchedulePageComponent implements OnInit, OnDestroy {
               this.serverError = error;
               return of([] as Slot[]);
             }),
-            finalize(() => (this.loadingSlots = false))
-          )
+            finalize(() => (this.loadingSlots = false)),
+          ),
         ),
-        takeUntil(this.destroyed)
+        takeUntil(this.destroyed),
       )
       .subscribe((slots) => (this.slots = slots));
   }
@@ -118,7 +118,7 @@ export class AppointmentSchedulePageComponent implements OnInit, OnDestroy {
       })
       .pipe(
         finalize(() => (this.submitting = false)),
-        takeUntil(this.destroyed)
+        takeUntil(this.destroyed),
       )
       .subscribe({
         next: () => {
@@ -141,7 +141,7 @@ export class AppointmentSchedulePageComponent implements OnInit, OnDestroy {
       .list()
       .pipe(
         finalize(() => (this.loadingReferenceData = false)),
-        takeUntil(this.destroyed)
+        takeUntil(this.destroyed),
       )
       .subscribe({
         next: (providers) => (this.providers = providers),

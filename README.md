@@ -31,8 +31,13 @@ the same stylesheet and keep the same `data-testid` values, so their output is b
 
 ```
 pulse-health/
-├── package.json                 root commands (dev, test, lint, build)
+├── package.json                 root commands (dev, test, lint, typecheck, build, demo)
+├── AGENTS.md                    invariants and conventions for agents and newcomers
 ├── docs/api-contract.md         frozen REST contract
+├── .github/workflows/           CI per app, secret scan, nightly flaky-test detection
+├── .devcontainer/               Node 22 + Python 3.12, runs npm run setup on create
+├── .pre-commit-config.yaml      ruff, mypy, oxlint, eslint, prettier, hygiene hooks
+├── e2e/                         Playwright specs driving both frontends on one port
 ├── apps/
 │   ├── portal-angular/          Angular 17 patient portal
 │   │   ├── karma.conf.js        headless Chrome, resolved from the puppeteer cache
@@ -58,7 +63,9 @@ pulse-health/
 │   └── mock-api/                FastAPI mock
 │       ├── app/domain/          models, rules, error envelope
 │       ├── app/api/             health, providers, visit types, slots, appointments, dev
+│       ├── app/observability/   JSON logs, Prometheus /metrics, OpenTelemetry traces
 │       ├── app/store.py         atomic file-backed persistence
+│       ├── demo_server.py       both built frontends + the API on one port
 │       └── data/store.json      runtime state (gitignored, reseeds when missing)
 ```
 
@@ -90,9 +97,12 @@ npm run setup   # backend venv + Angular dependencies
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
 | `npm run start:angular` | `ng serve`, http://localhost:4200 |
 | `npm run start:react` | `vite`, http://localhost:4300 |
-| `npm test` | all three suites (96 + 42 + 62 tests) |
+| `npm test` | all three unit suites (116 + 42 + 62 = 220 tests) |
 | `npm run test:api` / `test:angular` / `test:react` | one suite only |
+| `npm run test:e2e` | 25 Playwright specs driving both frontends in a real browser |
 | `npm run lint` | ruff, then eslint, then oxlint |
+| `npm run typecheck` | mypy (strict), then Angular tsc, then React tsc |
+| `npm run format` | Prettier over TS/JS/JSON/YAML |
 | `npm run build` | production bundles for both frontends |
 | `npm run demo` | build both frontends and serve them with the API on one port |
 | `npm run reset:data` | reseed the API store while it is running |
@@ -190,9 +200,11 @@ Enforced in the API and surfaced in the UI:
 npm test
 ```
 
-- **API, 96 tests.** Every rule and error code, filter and ordering behaviour, the error envelope
+- **API, 116 tests.** Every rule and error code, filter and ordering behaviour, the error envelope
   shape for malformed bodies, slot freeing on cancel and swapping on reschedule, and persistence
-  across a store reload.
+  across a store reload. Plus observability: correlation ids, metric label cardinality, the JSON
+  log line's shape, and two tests that pin the `/api` payload and error-envelope shapes so the
+  frozen contract cannot drift.
 - **React, 62 tests.** The same ground as the Angular suite in the React idiom: the client's error
   normalisation and query-string building, query-key isolation and cache invalidation, the shared
   primitives and date helpers, the three components, and the three pages including the orderings
@@ -202,6 +214,16 @@ npm test
   the pipe and validator, plus component tests for the list page (loading, empty, filtered
   empty, error with retry, cancel confirmation accepted and dismissed, cancel rejection) and the
   schedule page (validation, submission, server error mapping, availability refresh).
+
+```bash
+npm run test:e2e
+```
+
+- **End to end, 25 specs.** Every user flow runs twice, once per implementation, against one live
+  API on one port. Five of them load the Angular page and the React page and diff their rendered
+  text, which is the only mechanical enforcement of the claim that the two frontends are
+  interchangeable. Non-ASCII characters are escaped in the failure output so an en-dash-versus-hyphen
+  regression cannot slip through as a visually identical diff.
 
 ## Notes for the migration phase
 

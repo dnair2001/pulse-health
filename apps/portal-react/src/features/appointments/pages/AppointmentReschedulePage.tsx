@@ -67,7 +67,8 @@ export function AppointmentReschedulePage() {
   const slotField = useController({ control, name: 'slotId' });
 
   const loading = appointmentQuery.isLoading;
-  const loadError = appointmentId === undefined ? MISSING_APPOINTMENT_ERROR : appointmentQuery.error;
+  const loadError =
+    appointmentId === undefined ? MISSING_APPOINTMENT_ERROR : appointmentQuery.error;
   const canReschedule = appointment !== null && appointment.status === 'scheduled';
 
   function onValid(values: RescheduleFormValues): void {

@@ -252,7 +252,11 @@ describe('AppointmentListPage', () => {
       const [visible, setVisible] = useState(false);
       return (
         <>
-          <button type="button" data-testid="seed" onClick={() => success('Appointment scheduled.')}>
+          <button
+            type="button"
+            data-testid="seed"
+            onClick={() => success('Appointment scheduled.')}
+          >
             seed
           </button>
           <button type="button" data-testid="toggle" onClick={() => setVisible((open) => !open)}>

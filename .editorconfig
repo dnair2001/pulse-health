@@ -1,0 +1,28 @@
+# Kept consistent with .prettierrc.json. See https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 100
+
+[*.{ts,tsx,js,mjs,cjs}]
+quote_type = single
+
+[*.py]
+indent_size = 4
+
+[*.md]
+max_line_length = off
+# Two trailing spaces are a hard line break in Markdown.
+trim_trailing_whitespace = false
+
+[*.{scss,css,html}]
+# Verbatim-copied stylesheets and Angular templates: no editor rewriting, their bytes
+# are load-bearing for the Angular/React parity invariant.
+trim_trailing_whitespace = false
+insert_final_newline = unset

@@ -1,0 +1,35 @@
+# Generated, vendored, or lock artefacts
+node_modules/
+dist/
+dist-demo/
+.venv/
+.angular/
+out-tsc/
+coverage/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+package-lock.json
+
+# HTML is never formatted. Prettier's whitespace handling in Angular templates can
+# change the text the browser renders, and invariant 3 (both frontends render
+# byte-identical user-visible text) is verified against rendered output.
+*.html
+
+# Stylesheets are never formatted. apps/portal-react/src/styles/global.scss is a
+# verbatim copy: its first 413 lines are apps/portal-angular/src/styles.scss and its
+# last 68 are apps/portal-angular/src/app/app.component.scss. Byte-equality of those
+# three files is an invariant, so no formatter may touch any stylesheet.
+*.scss
+*.css
+
+# Python is formatted by ruff format, not Prettier.
+*.py
+
+# Markdown here is normative prose (AGENTS.md, docs/api-contract.md). Reflowing it
+# produces large diffs in documents that are read as specifications, so it is edited
+# by hand rather than by the formatter.
+*.md
+
+# CI workflow YAML is maintained by hand alongside the pipeline it describes.
+.github/

@@ -23,7 +23,7 @@ describe('AppComponent', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('.shell__name')?.textContent).toContain('Pulse Health');
     expect(element.querySelector('[data-testid="patient-name"]')?.textContent).toContain(
-      'Jordan Reyes'
+      'Jordan Reyes',
     );
   });
 });

@@ -1,0 +1,19 @@
+{
+  "name": "pulse-health-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser-level suite driving both frontends against one mock API",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "setup": "playwright install chromium",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

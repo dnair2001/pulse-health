@@ -1,0 +1,43 @@
+{
+  // Node 22 base image; Python 3.12 comes from the feature below. Both are required:
+  // the frontends need Node 22+, the API needs Python 3.12+.
+  "name": "pulse-health",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12",
+      "installTools": false
+    }
+  },
+
+  // Same two commands the README prescribes, so a fresh container is immediately usable.
+  // The venv records absolute paths, so it must be built inside the container.
+  "postCreateCommand": "npm install && npm run setup",
+
+  "forwardPorts": [8000, 4200, 4300, 8080],
+  "portsAttributes": {
+    "8000": { "label": "mock-api (FastAPI)", "onAutoForward": "notify" },
+    "4200": { "label": "portal-angular dev server", "onAutoForward": "notify" },
+    "4300": { "label": "portal-react dev server", "onAutoForward": "notify" },
+    "8080": { "label": "demo server (both frontends + API)", "onAutoForward": "notify" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "angular.ng-template",
+        "charliermarsh.ruff",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-python.python",
+        "editorconfig.editorconfig"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "python.defaultInterpreterPath": "${workspaceFolder}/apps/mock-api/.venv/bin/python",
+        "[python]": { "editor.defaultFormatter": "charliermarsh.ruff" }
+      }
+    }
+  }
+}

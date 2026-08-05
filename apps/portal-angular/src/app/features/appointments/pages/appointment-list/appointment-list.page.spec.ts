@@ -98,14 +98,14 @@ describe('AppointmentListPageComponent', () => {
 
   it('renders a card per appointment once loaded', () => {
     appointmentsService.list.and.returnValue(
-      of([appointment(), appointment({ id: 'apt_002', reason: 'Follow-up' })])
+      of([appointment(), appointment({ id: 'apt_002', reason: 'Follow-up' })]),
     );
 
     fixture.detectChanges();
 
     expect(element().querySelectorAll('.appointment').length).toBe(2);
     expect(element().querySelector('[data-testid="appointment-apt_001"]')?.textContent).toContain(
-      'Dr. Alice Nguyen'
+      'Dr. Alice Nguyen',
     );
     expect(element().querySelector('[data-testid="loading-spinner"]')).toBeNull();
   });
@@ -145,7 +145,7 @@ describe('AppointmentListPageComponent', () => {
 
     expect(lastQuery().status).toEqual(['completed']);
     expect(element().querySelector('[data-testid="empty-state"]')?.textContent).toContain(
-      'No appointments match these filters'
+      'No appointments match these filters',
     );
   });
 
@@ -161,7 +161,7 @@ describe('AppointmentListPageComponent', () => {
     fixture.detectChanges();
 
     expect(element().querySelector('[data-testid="alert-banner"]')?.textContent).toContain(
-      'Cannot reach the Pulse Health API.'
+      'Cannot reach the Pulse Health API.',
     );
 
     appointmentsService.list.and.returnValue(of([appointment()]));
@@ -174,7 +174,7 @@ describe('AppointmentListPageComponent', () => {
   it('cancels an appointment only after the confirmation is accepted', () => {
     appointmentsService.list.and.returnValue(of([appointment()]));
     appointmentsService.cancel.and.returnValue(
-      of(appointment({ status: 'cancelled', cancellable: false }))
+      of(appointment({ status: 'cancelled', cancellable: false })),
     );
 
     fixture.detectChanges();
@@ -188,7 +188,7 @@ describe('AppointmentListPageComponent', () => {
     expect(appointmentsService.cancel).toHaveBeenCalledOnceWith('apt_001');
     expect(element().querySelector('[data-testid="confirm-dialog"]')).toBeNull();
     expect(element().querySelector('[data-testid="alert-banner"]')?.textContent).toContain(
-      'Appointment cancelled.'
+      'Appointment cancelled.',
     );
     expect(appointmentsService.list).toHaveBeenCalledTimes(2);
   });
@@ -219,19 +219,19 @@ describe('AppointmentListPageComponent', () => {
     click('confirm-accept');
 
     expect(element().querySelector('[data-testid="alert-banner"]')?.textContent).toContain(
-      'Completed appointments cannot be cancelled.'
+      'Completed appointments cannot be cancelled.',
     );
   });
 
   it('explains why a completed appointment cannot be cancelled', () => {
     appointmentsService.list.and.returnValue(
-      of([appointment({ status: 'completed', cancellable: false })])
+      of([appointment({ status: 'completed', cancellable: false })]),
     );
 
     fixture.detectChanges();
 
     expect(element().querySelector('[data-testid="cancel-blocked"]')?.textContent).toContain(
-      'Completed visits cannot be cancelled.'
+      'Completed visits cannot be cancelled.',
     );
     expect(element().querySelector('[data-testid="cancel-apt_001"]')).toBeNull();
   });

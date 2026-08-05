@@ -11,6 +11,13 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:4200"]
     # Relative to the process working directory (apps/mock-api).
     store_path: str = "data/store.json"
+    log_level: str = "INFO"
+    # Structured JSON logs are written here as well as to stdout, because
+    # after-the-fact debugging reads the filesystem, not the console.
+    log_path: str = "data/logs/api.log"
+    # Default span destination. Ignored when OTEL_EXPORTER_OTLP_ENDPOINT is set.
+    trace_path: str = "data/logs/traces.jsonl"
+    tracing_enabled: bool = True
 
 
 settings = Settings()

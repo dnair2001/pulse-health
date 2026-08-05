@@ -1,0 +1,17 @@
+# Everything is owned by @dnair2001 unless a more specific rule below matches.
+# Last matching pattern wins.
+*                           @dnair2001
+
+# Apps
+/apps/mock-api/             @dnair2001
+/apps/portal-angular/       @dnair2001
+/apps/portal-react/         @dnair2001
+
+# The frozen contract and the shared conventions: changes here affect all three apps.
+/docs/api-contract.md       @dnair2001
+/AGENTS.md                  @dnair2001
+
+# CI, process files, and root tooling
+/.github/                   @dnair2001
+/package.json               @dnair2001
+/package-lock.json          @dnair2001

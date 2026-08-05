@@ -9,6 +9,7 @@ from app.api.slots import router as slots_router
 from app.api.visit_types import router as visit_types_router
 from app.config import settings
 from app.domain.errors import register_exception_handlers
+from app.observability import setup_observability
 
 
 def create_app() -> FastAPI:
@@ -30,6 +31,8 @@ def create_app() -> FastAPI:
     app.include_router(slots_router, prefix="/api")
     app.include_router(appointments_router, prefix="/api")
     app.include_router(dev_router, prefix="/api")
+
+    setup_observability(app)
     return app
 
 

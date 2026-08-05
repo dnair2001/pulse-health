@@ -36,9 +36,9 @@ describe('SlotPicker', () => {
     render(<SlotPicker slots={SLOTS} value={null} onChange={vi.fn()} />);
 
     const picker = screen.getByTestId('slot-picker');
-    expect([...picker.querySelectorAll('.slot-picker__date')].map((node) => node.textContent)).toEqual(
-      [formatDayGroupHeading('2099-01-05'), formatDayGroupHeading('2099-01-06')],
-    );
+    expect(
+      [...picker.querySelectorAll('.slot-picker__date')].map((node) => node.textContent),
+    ).toEqual([formatDayGroupHeading('2099-01-05'), formatDayGroupHeading('2099-01-06')]);
     expect(
       [...picker.querySelectorAll('.slot')].map((node) => node.getAttribute('data-testid')),
     ).toEqual(['slot-slt_c', 'slot-slt_a', 'slot-slt_b']);
@@ -66,9 +66,7 @@ describe('SlotPicker', () => {
   });
 
   it('prefers the spinner over the empty message while loading, and keeps rendering known slots', () => {
-    const { rerender } = render(
-      <SlotPicker slots={[]} loading value={null} onChange={vi.fn()} />,
-    );
+    const { rerender } = render(<SlotPicker slots={[]} loading value={null} onChange={vi.fn()} />);
 
     expect(screen.getByTestId('loading-spinner')).toHaveTextContent('Loading available times…');
     expect(screen.queryByTestId('slot-picker-empty')).not.toBeInTheDocument();

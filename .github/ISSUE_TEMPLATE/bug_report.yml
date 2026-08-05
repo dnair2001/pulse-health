@@ -1,0 +1,80 @@
+name: Bug report
+description: Something behaves incorrectly in the API, the Angular portal, or the React portal.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: seed data ages, because appointments are seeded relative to the current
+        time. If the app merely looks stale, run `npm run reset:data` (with the API running)
+        first.
+
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app
+      options:
+        - apps/mock-api (FastAPI)
+        - apps/portal-angular (Angular 17)
+        - apps/portal-react (React 19)
+        - Divergence between the two frontends
+        - Tooling / root scripts
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Include the exact user-visible text or JSON you saw.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: |
+        If this is a frontend divergence, remember that Angular is the reference
+        implementation by definition — say what Angular renders.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. npm start
+        2. Open http://localhost:4300/appointments
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: timezone
+    attributes:
+      label: TZ the bug reproduces under
+      description: Date bugs are frequently timezone-specific.
+      placeholder: America/New_York
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: |
+        node -v:
+        python3 --version:
+        OS:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contract
+    attributes:
+      label: Contract
+      options:
+        - label: I have checked `docs/api-contract.md` and this is a deviation from it, or is unrelated to the contract.
+          required: false

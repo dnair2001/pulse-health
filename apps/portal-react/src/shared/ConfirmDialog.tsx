@@ -25,7 +25,13 @@ export function ConfirmDialog({
 
   return (
     <div className="dialog-backdrop">
-      <div className="dialog" role="dialog" aria-modal="true" aria-label={title} data-testid="confirm-dialog">
+      <div
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        data-testid="confirm-dialog"
+      >
         <h2 className="dialog__title">{title}</h2>
         {message ? <p className="dialog__message">{message}</p> : null}
         <div className="dialog__actions">

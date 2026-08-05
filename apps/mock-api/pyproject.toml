@@ -8,6 +8,9 @@ requires-python = ">=3.12"
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = "-q"
+# Tracing is set up when app.main is imported, so this has to be in place before
+# collection starts; that is why it lives here rather than in a fixture.
+env = ["OTEL_SDK_DISABLED=true"]
 
 [tool.ruff]
 line-length = 100
@@ -15,3 +18,10 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["app"]
+pretty = true
+show_error_codes = true

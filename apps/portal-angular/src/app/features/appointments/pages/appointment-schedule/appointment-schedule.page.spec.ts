@@ -135,7 +135,7 @@ describe('AppointmentSchedulePageComponent', () => {
 
     expect(appointmentsService.schedule).not.toHaveBeenCalled();
     expect(element().querySelector('[data-testid="reason-error"]')?.textContent).toContain(
-      'A reason for the visit is required.'
+      'A reason for the visit is required.',
     );
     expect(element().querySelector('[data-testid="slot-error"]')).not.toBeNull();
   });
@@ -201,7 +201,7 @@ describe('AppointmentSchedulePageComponent', () => {
     submit();
 
     expect(element().querySelector('[data-testid="alert-banner"]')?.textContent).toContain(
-      'That time slot has just been taken.'
+      'That time slot has just been taken.',
     );
     expect(element().querySelector('[data-testid="slot-server-error"]')).not.toBeNull();
     expect(component.form.controls['slotId'].value).toBe('');
@@ -245,7 +245,7 @@ describe('AppointmentSchedulePageComponent', () => {
     fixture.detectChanges();
 
     expect(element().querySelector('[data-testid="alert-banner"]')?.textContent).toContain(
-      'Cannot reach the Pulse Health API.'
+      'Cannot reach the Pulse Health API.',
     );
   });
 });

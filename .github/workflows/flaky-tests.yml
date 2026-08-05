@@ -1,0 +1,92 @@
+name: Flaky test detection
+
+on:
+  schedule:
+    # 03:17 UTC nightly. Off-the-hour to avoid GitHub's cron congestion.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: mock-api x3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            apps/mock-api/requirements.txt
+            apps/mock-api/requirements-dev.txt
+
+      - name: Install dependencies
+        working-directory: apps/mock-api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run pytest three times
+        working-directory: apps/mock-api
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/run-thrice.sh" "mock-api (pytest)" pytest
+
+  angular:
+    name: portal-angular x3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/portal-angular/package-lock.json
+
+      - name: Install Chrome
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-dependencies: true
+
+      - name: Install dependencies
+        working-directory: apps/portal-angular
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+        run: npm ci
+
+      - name: Run Karma three times
+        working-directory: apps/portal-angular
+        env:
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/run-thrice.sh" "portal-angular (karma)" npm run test:ci
+
+  react:
+    name: portal-react x3 (TZ=${{ matrix.tz }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tz: [UTC, America/New_York]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/portal-react/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/portal-react
+        run: npm ci
+
+      - name: Run Vitest three times
+        working-directory: apps/portal-react
+        env:
+          TZ: ${{ matrix.tz }}
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/run-thrice.sh" "portal-react (vitest, TZ=${{ matrix.tz }})" npm run test:ci

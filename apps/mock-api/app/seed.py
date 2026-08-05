@@ -110,9 +110,7 @@ def build_seed(now: datetime | None = None) -> StoreData:
                 slots[slot.id] = slot
         for day in past_days:
             for start_time in PAST_SLOT_STARTS:
-                slot = _make_slot(
-                    provider.id, datetime.combine(day, start_time, tzinfo=UTC)
-                )
+                slot = _make_slot(provider.id, datetime.combine(day, start_time, tzinfo=UTC))
                 slots[slot.id] = slot
 
     appointments = _build_appointments(reference, slots, future_days, past_days)

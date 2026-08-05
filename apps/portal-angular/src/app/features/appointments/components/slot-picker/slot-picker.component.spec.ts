@@ -79,7 +79,7 @@ describe('SlotPickerComponent', () => {
     setSlots(SLOTS);
 
     const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      '[data-testid="slot-slt_c"]'
+      '[data-testid="slot-slt_c"]',
     );
     button?.click();
     fixture.detectChanges();

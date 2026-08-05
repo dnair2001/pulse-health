@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Repository conventions and invariants
+    url: https://github.com/dnair2001/pulse-health/blob/main/AGENTS.md
+    about: Commands, hard invariants, and gotchas. Read this before filing anything.
+  - name: Frozen API contract
+    url: https://github.com/dnair2001/pulse-health/blob/main/docs/api-contract.md
+    about: The specification the mock API and both frontends are held to.
+  - name: Security issue
+    url: https://github.com/dnair2001/pulse-health/blob/main/SECURITY.md
+    about: How to report a security problem instead of opening a public issue.

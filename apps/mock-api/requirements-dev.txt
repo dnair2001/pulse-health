@@ -1,4 +1,7 @@
 -r requirements.txt
 pytest==9.1.1
+pytest-env==1.7.0
 httpx==0.28.1
 ruff==0.16.1
+mypy==1.19.0
+pre-commit==4.4.0

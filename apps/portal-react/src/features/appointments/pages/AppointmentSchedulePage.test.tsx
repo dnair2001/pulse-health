@@ -95,7 +95,9 @@ function mockApi(handlers: Handlers = {}): void {
       if (handlers.slots) {
         return Promise.resolve(handlers.slots(url, index));
       }
-      return Promise.resolve(jsonResponse(url.includes('prv_002') ? [SLOT_OTHER_PROVIDER] : [SLOT_ONE, SLOT_TWO]));
+      return Promise.resolve(
+        jsonResponse(url.includes('prv_002') ? [SLOT_OTHER_PROVIDER] : [SLOT_ONE, SLOT_TWO]),
+      );
     }
     if (url === '/api/appointments' && init?.method === 'POST') {
       return Promise.resolve(handlers.schedule ? handlers.schedule() : jsonResponse(CREATED, 201));
@@ -258,8 +260,7 @@ describe('AppointmentSchedulePage', () => {
   it('surfaces a failed availability request instead of claiming there are no slots', async () => {
     const user = userEvent.setup();
     mockApi({
-      slots: () =>
-        errorResponse(500, 'UNKNOWN', 'Availability is temporarily unavailable.', null),
+      slots: () => errorResponse(500, 'UNKNOWN', 'Availability is temporarily unavailable.', null),
     });
     renderWithProviders(<AppointmentSchedulePage />);
 
@@ -298,9 +299,11 @@ describe('AppointmentSchedulePage', () => {
 
     await waitFor(() => expect(screen.getByTestId('submit-appointment')).toBeEnabled());
     expect(screen.getByTestId('submit-appointment')).toHaveTextContent('Confirm appointment');
-    expect(within(screen.getByTestId('alert-banner')).getByText(
-      'Tell us a little more about the visit.',
-    )).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('alert-banner')).getByText(
+        'Tell us a little more about the visit.',
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('reason-input')).toHaveValue('  Annual physical  ');
   });
 });

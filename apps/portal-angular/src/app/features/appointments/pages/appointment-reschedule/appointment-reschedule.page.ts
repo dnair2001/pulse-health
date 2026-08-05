@@ -33,7 +33,7 @@ export class AppointmentReschedulePageComponent implements OnInit, OnDestroy {
     private readonly slotsService: SlotsService,
     private readonly notifications: NotificationService,
     private readonly route: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
   ) {
     this.form = this.formBuilder.group({ slotId: ['', Validators.required] });
   }
@@ -45,7 +45,7 @@ export class AppointmentReschedulePageComponent implements OnInit, OnDestroy {
       .pipe(
         switchMap((params) => this.appointmentsService.getById(String(params.get('id')))),
         finalize(() => (this.loading = false)),
-        takeUntil(this.destroyed)
+        takeUntil(this.destroyed),
       )
       .subscribe({
         next: (appointment) => {
@@ -81,7 +81,7 @@ export class AppointmentReschedulePageComponent implements OnInit, OnDestroy {
       .reschedule(this.appointment.id, { slotId: String(this.form.getRawValue().slotId) })
       .pipe(
         finalize(() => (this.submitting = false)),
-        takeUntil(this.destroyed)
+        takeUntil(this.destroyed),
       )
       .subscribe({
         next: () => {
@@ -111,7 +111,7 @@ export class AppointmentReschedulePageComponent implements OnInit, OnDestroy {
       .list({ providerId })
       .pipe(
         finalize(() => (this.loadingSlots = false)),
-        takeUntil(this.destroyed)
+        takeUntil(this.destroyed),
       )
       .subscribe({
         next: (slots) => (this.slots = slots),

@@ -69,7 +69,9 @@ function mockApi(handlers: Handlers = {}): void {
       );
     }
     if (url.startsWith('/api/appointments/')) {
-      return Promise.resolve(handlers.appointment ? handlers.appointment() : jsonResponse(APPOINTMENT));
+      return Promise.resolve(
+        handlers.appointment ? handlers.appointment() : jsonResponse(APPOINTMENT),
+      );
     }
 
     return Promise.resolve(errorResponse(404, 'NOT_FOUND', 'Unexpected request.', null));
@@ -146,7 +148,9 @@ describe('AppointmentReschedulePage', () => {
     mockApi({ appointment: () => jsonResponse({ ...APPOINTMENT, status: 'cancelled' }) });
     renderPage();
 
-    expect(await screen.findByText('Only scheduled appointments can be rescheduled.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Only scheduled appointments can be rescheduled.'),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('current-appointment')).toBeInTheDocument();
     expect(screen.queryByTestId('submit-reschedule')).not.toBeInTheDocument();
   });

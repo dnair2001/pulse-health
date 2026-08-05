@@ -6,7 +6,9 @@ describe('StatusBadgeComponent', () => {
   let fixture: ComponentFixture<StatusBadgeComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ declarations: [StatusBadgeComponent] }).compileComponents();
+    await TestBed.configureTestingModule({
+      declarations: [StatusBadgeComponent],
+    }).compileComponents();
     fixture = TestBed.createComponent(StatusBadgeComponent);
   });
 

@@ -7,7 +7,11 @@ import { AppointmentSchedulePageComponent } from './pages/appointment-schedule/a
 
 const routes: Routes = [
   { path: '', component: AppointmentListPageComponent, title: 'Your appointments' },
-  { path: 'schedule', component: AppointmentSchedulePageComponent, title: 'Schedule an appointment' },
+  {
+    path: 'schedule',
+    component: AppointmentSchedulePageComponent,
+    title: 'Schedule an appointment',
+  },
   {
     path: ':id/reschedule',
     component: AppointmentReschedulePageComponent,

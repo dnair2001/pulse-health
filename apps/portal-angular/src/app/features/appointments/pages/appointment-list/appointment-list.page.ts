@@ -39,7 +39,7 @@ export class AppointmentListPageComponent implements OnInit, OnDestroy {
     private readonly appointmentsService: AppointmentsService,
     private readonly providersService: ProvidersService,
     private readonly notifications: NotificationService,
-    private readonly router: Router
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -81,7 +81,7 @@ export class AppointmentListPageComponent implements OnInit, OnDestroy {
       .list(this.buildQuery())
       .pipe(
         finalize(() => (this.loading = false)),
-        takeUntil(this.destroyed)
+        takeUntil(this.destroyed),
       )
       .subscribe({
         next: (appointments) => (this.appointments = appointments),
@@ -124,7 +124,7 @@ export class AppointmentListPageComponent implements OnInit, OnDestroy {
       .cancel(appointment.id)
       .pipe(
         finalize(() => (this.cancelling = false)),
-        takeUntil(this.destroyed)
+        takeUntil(this.destroyed),
       )
       .subscribe({
         next: () => {

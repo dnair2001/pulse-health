@@ -15,8 +15,20 @@ function resolveChromeBinary() {
   const relativeBinaries = [
     path.join('chrome-linux64', 'chrome'),
     path.join('chrome-linux', 'chrome'),
-    path.join('chrome-mac-x64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'),
-    path.join('chrome-mac-arm64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'),
+    path.join(
+      'chrome-mac-x64',
+      'Google Chrome for Testing.app',
+      'Contents',
+      'MacOS',
+      'Google Chrome for Testing',
+    ),
+    path.join(
+      'chrome-mac-arm64',
+      'Google Chrome for Testing.app',
+      'Contents',
+      'MacOS',
+      'Google Chrome for Testing',
+    ),
     path.join('chrome-win64', 'chrome.exe'),
   ];
 
@@ -33,7 +45,7 @@ function resolveChromeBinary() {
 
   throw new Error(
     'Chrome for Karma was not found. Run `npm install` in apps/portal-angular to download it, ' +
-      'or set CHROME_BIN to an existing Chrome/Chromium binary.'
+      'or set CHROME_BIN to an existing Chrome/Chromium binary.',
   );
 }
 

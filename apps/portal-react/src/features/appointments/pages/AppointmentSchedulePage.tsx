@@ -4,7 +4,12 @@ import { useController, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 
-import { useProviders, useScheduleAppointment, useSlots, useVisitTypes } from '../../../api/queries';
+import {
+  useProviders,
+  useScheduleAppointment,
+  useSlots,
+  useVisitTypes,
+} from '../../../api/queries';
 import type { ApiError, VisitTypeId } from '../../../api/types';
 import { useNotifications } from '../../../notifications/NotificationProvider';
 import { AlertBanner } from '../../../shared/AlertBanner';

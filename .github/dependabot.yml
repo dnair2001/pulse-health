@@ -1,0 +1,87 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      root-tooling:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /apps/portal-angular
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Angular releases its packages in lockstep; separate PRs would never install.
+      angular:
+        patterns:
+          - '@angular/*'
+          - '@angular-devkit/*'
+          - '@angular-eslint/*'
+      karma:
+        patterns:
+          - 'karma*'
+          - 'jasmine*'
+          - '@types/jasmine'
+          - 'puppeteer'
+      angular-other:
+        patterns: ['*']
+    ignore:
+      # This app is deliberately period-accurate Angular 17; see AGENTS.md.
+      - dependency-name: '@angular/*'
+        update-types: [version-update:semver-major]
+      - dependency-name: '@angular-devkit/*'
+        update-types: [version-update:semver-major]
+      - dependency-name: '@angular-eslint/*'
+        update-types: [version-update:semver-major]
+      - dependency-name: '@angular/cli'
+        update-types: [version-update:semver-major]
+      - dependency-name: 'typescript'
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: npm
+    directory: /apps/portal-react
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      react:
+        patterns:
+          - 'react'
+          - 'react-dom'
+          - '@types/react'
+          - '@types/react-dom'
+      test-tooling:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+          - '@testing-library/*'
+          - 'jsdom'
+      react-other:
+        patterns: ['*']
+
+  - package-ecosystem: pip
+    directory: /apps/mock-api
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      python:
+        patterns: ['*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']

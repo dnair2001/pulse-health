@@ -105,9 +105,7 @@ def test_rule_6_completed_appointment_cannot_be_rescheduled(
     client: TestClient, data: StoreData
 ) -> None:
     completed_id = next(
-        record.id
-        for record in data.appointments
-        if record.status is AppointmentStatus.COMPLETED
+        record.id for record in data.appointments if record.status is AppointmentStatus.COMPLETED
     )
     target = free_slots(data, "prv_001")[0]
 

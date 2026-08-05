@@ -1,0 +1,88 @@
+# Install with: apps/mock-api/.venv/bin/pre-commit install
+# Run over everything with: apps/mock-api/.venv/bin/pre-commit run --all-files
+#
+# Every linter/formatter hook is `language: system` and invokes the binary this repo
+# already installs (apps/mock-api/.venv, or the per-app node_modules). That keeps commits
+# fast and offline: pre-commit builds no isolated environments for them.
+minimum_pre_commit_version: "3.5.0"
+default_install_hook_types: [pre-commit]
+fail_fast: false
+
+# The copied stylesheets and the Angular templates are excluded from every whitespace
+# rewriting hook below. apps/portal-react/src/styles/global.scss is a verbatim copy: its
+# first 413 lines are apps/portal-angular/src/styles.scss and its last 68 are
+# apps/portal-angular/src/app/app.component.scss. Byte-equality of those three files, and
+# the rendered whitespace of the templates, are invariants (see AGENTS.md invariant 3), so
+# a stray trailing-whitespace or final-newline fix there is a defect, not a cleanup.
+exclude: |
+  (?x)^(
+    apps/portal-react/src/styles/global\.scss|
+    apps/portal-angular/src/styles\.scss|
+    apps/portal-angular/src/app/app\.component\.scss|
+    .*\.html
+  )$
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+        # These are JSON-with-comments (tsconfig, devcontainer, VS Code); a strict JSON
+        # parser rejects them even though every tool that reads them accepts comments.
+        exclude: |
+          (?x)^(
+            \.devcontainer/devcontainer\.json|
+            apps/portal-angular/\.vscode/.*\.json|
+            apps/.*/tsconfig.*\.json
+          )$
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: [--maxkb=512]
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check (mock-api)
+        entry: apps/mock-api/.venv/bin/ruff check --force-exclude --fix
+        language: system
+        types_or: [python, pyi]
+        files: ^apps/mock-api/
+
+      - id: ruff-format
+        name: ruff format (mock-api)
+        entry: apps/mock-api/.venv/bin/ruff format --force-exclude
+        language: system
+        types_or: [python, pyi]
+        files: ^apps/mock-api/
+
+      - id: mypy
+        name: mypy (mock-api)
+        # Whole-package check: mypy needs the package, not a file list, to resolve imports.
+        entry: bash -c 'cd apps/mock-api && .venv/bin/mypy app'
+        language: system
+        pass_filenames: false
+        files: ^apps/mock-api/app/.*\.py$
+
+      - id: oxlint
+        name: oxlint (portal-react)
+        entry: apps/portal-react/node_modules/.bin/oxlint
+        language: system
+        files: ^apps/portal-react/src/.*\.(ts|tsx|js|jsx)$
+
+      - id: eslint-angular
+        name: eslint (portal-angular)
+        entry: apps/portal-angular/node_modules/.bin/eslint --resolve-plugins-relative-to
+          apps/portal-angular
+        language: system
+        files: ^apps/portal-angular/src/.*\.ts$
+
+      - id: prettier
+        name: prettier
+        entry: node_modules/.bin/prettier --write --ignore-unknown
+        language: system
+        types_or: [ts, tsx, javascript, json, yaml, markdown]

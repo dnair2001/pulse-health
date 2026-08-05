@@ -54,7 +54,13 @@ describe('EmptyState', () => {
   });
 
   it('renders the overridden title, message and action label', () => {
-    render(<EmptyState title="No appointments" message="Book one to get started." actionLabel="Schedule" />);
+    render(
+      <EmptyState
+        title="No appointments"
+        message="Book one to get started."
+        actionLabel="Schedule"
+      />,
+    );
 
     expect(screen.getByText('No appointments')).toBeInTheDocument();
     expect(screen.getByText('Book one to get started.')).toBeInTheDocument();
@@ -123,7 +129,14 @@ describe('ConfirmDialog', () => {
   });
 
   it('swaps the confirm label and disables both actions while busy', () => {
-    render(<ConfirmDialog open busy confirmLabel="Cancel appointment" message="This cannot be undone." />);
+    render(
+      <ConfirmDialog
+        open
+        busy
+        confirmLabel="Cancel appointment"
+        message="This cannot be undone."
+      />,
+    );
 
     expect(screen.getByText('This cannot be undone.')).toBeInTheDocument();
     expect(screen.getByTestId('confirm-accept')).toHaveTextContent('Working…');
