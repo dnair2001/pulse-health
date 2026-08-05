@@ -22,6 +22,8 @@ const KNOWN_CODES: ApiErrorCode[] = [
 
 const FALLBACK_MESSAGE = 'Something went wrong. Please try again.';
 
+const REQUEST_ID_HEADER = 'X-Request-Id';
+
 function isEnvelope(body: unknown): body is ApiErrorEnvelope {
   if (typeof body !== 'object' || body === null) {
     return false;
@@ -53,12 +55,22 @@ export function toApiError(response: HttpErrorResponse): ApiError {
   return { code: 'UNKNOWN', message: FALLBACK_MESSAGE, field: null, status: response.status };
 }
 
-/** Converts every HTTP failure into the ApiError shape the UI renders. */
+/**
+ * Stamps every outbound request with a fresh `X-Request-Id` and converts every HTTP
+ * failure into the ApiError shape the UI renders. A fresh id per request (not one shared
+ * for the app's lifetime) is what lets a single browser action be correlated to a single
+ * server log line; a caller-supplied id (if a request already carries one) is respected
+ * rather than overwritten, mirroring the API's own "use it if present" behaviour.
+ */
 @Injectable()
 export class ApiErrorInterceptor implements HttpInterceptor {
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    const withRequestId = request.headers.has(REQUEST_ID_HEADER)
+      ? request
+      : request.clone({ setHeaders: { [REQUEST_ID_HEADER]: crypto.randomUUID() } });
+
     return next
-      .handle(request)
+      .handle(withRequestId)
       .pipe(catchError((response: HttpErrorResponse) => throwError(() => toApiError(response))));
   }
 }

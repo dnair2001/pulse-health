@@ -44,6 +44,50 @@ _STANDARD_ATTRS = frozenset(
     }
 )
 
+# Fields known to be machine-generated (request metadata set by
+# `middleware.py`'s `_fields()`, ids set by `RequestContextFilter`, or the
+# formatter's own baseline keys). Anything else arriving via `extra=` is
+# scrubbed rather than trusted, because the next caller to add
+# `extra={"reason": appointment.reason}` would otherwise persist real
+# user-entered free text to disk. This is an allowlist, not a blocklist: an
+# unrecognised field fails closed (gets scrubbed) instead of failing open.
+_SAFE_EXTRA_FIELDS = frozenset(
+    {
+        "timestamp",
+        "level",
+        "logger",
+        "message",
+        "method",
+        "path",
+        "query",
+        "route",
+        "status",
+        "durationMs",
+        "traceId",
+        "requestId",
+        "exception",
+        "stack",
+        # Startup diagnostics from `app/observability/__init__.py` and
+        # `tracing.py`: exporter/transport mode and on-disk paths, never
+        # user input.
+        "logFile",
+        "tracing",
+        "exporter",
+        "destination",
+        # uvicorn's own logging sets this alongside `message` for coloured
+        # console output; it is a copy of the log text uvicorn already emits.
+        "color_message",
+    }
+)
+
+
+# Marker written in place of a scrubbed value. It names the withheld key so a
+# reader can tell a field arrived and was deliberately redacted, rather than
+# silently vanishing (which would look identical to the field never existing).
+def _scrub_marker(key: str) -> str:
+    return f"<scrubbed:{key}>"
+
+
 _OWNED_HANDLER_FLAG = "_pulse_observability"
 
 # uvicorn installs its own handlers on these; clearing them routes its output
@@ -63,7 +107,7 @@ class JsonFormatter(logging.Formatter):
         }
         for key, value in record.__dict__.items():
             if key not in _STANDARD_ATTRS and not key.startswith("_"):
-                payload[key] = value
+                payload[key] = value if key in _SAFE_EXTRA_FIELDS else _scrub_marker(key)
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         if record.stack_info:

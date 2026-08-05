@@ -166,7 +166,7 @@ jobs:
         working-directory: apps/portal-react
         env:
           TZ: ${{ matrix.tz }}
-        run: npm run test:ci
+        run: npm run test:coverage
 
   ci:
     name: CI

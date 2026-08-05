@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isApiError, request, toApiError, toQueryString } from './client';
+import { isApiError, request, shouldRetryQuery, toApiError, toQueryString } from './client';
 import { errorResponse, jsonResponse } from '../test/helpers';
 
 const FALLBACK_MESSAGE = 'Something went wrong. Please try again.';
@@ -113,5 +113,84 @@ describe('request', () => {
 
     expect(new Headers(getInit.headers).get('Content-Type')).toBeNull();
     expect(new Headers(postInit.headers).get('Content-Type')).toBe('application/json');
+  });
+
+  const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  it('sets a well-formed X-Request-Id header on every call', async () => {
+    globalThis.fetchMock.mockResolvedValue(jsonResponse([]));
+
+    await request('/api/providers');
+
+    const [, init] = globalThis.fetchMock.mock.calls[0] as [string, RequestInit];
+    const requestId = new Headers(init.headers).get('X-Request-Id');
+
+    expect(requestId).toMatch(UUID_PATTERN);
+  });
+
+  it('generates a distinct id for each call rather than reusing one', async () => {
+    globalThis.fetchMock.mockResolvedValue(jsonResponse([]));
+
+    await request('/api/providers');
+    await request('/api/providers');
+
+    const [firstInit, secondInit] = globalThis.fetchMock.mock.calls.map(
+      (call: unknown[]) => call[1] as RequestInit,
+    );
+    const firstId = new Headers(firstInit.headers).get('X-Request-Id');
+    const secondId = new Headers(secondInit.headers).get('X-Request-Id');
+
+    expect(firstId).toMatch(UUID_PATTERN);
+    expect(secondId).toMatch(UUID_PATTERN);
+    expect(firstId).not.toBe(secondId);
+  });
+
+  it('respects a caller-supplied X-Request-Id instead of overwriting it', async () => {
+    globalThis.fetchMock.mockResolvedValue(jsonResponse([]));
+
+    await request('/api/providers', { headers: { 'X-Request-Id': 'caller-supplied-id' } });
+
+    const [, init] = globalThis.fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).get('X-Request-Id')).toBe('caller-supplied-id');
+  });
+});
+
+describe('shouldRetryQuery', () => {
+  it('does not retry a 422 validation-style application error', () => {
+    const validationError = toApiError(422, {
+      error: { code: 'VALIDATION_ERROR', message: 'Reason is too short.', field: 'reason' },
+    });
+
+    expect(shouldRetryQuery(0, validationError)).toBe(false);
+  });
+
+  it('does not retry other 4xx application errors, e.g. a 409 conflict', () => {
+    const conflictError = toApiError(409, {
+      error: { code: 'SLOT_ALREADY_BOOKED', message: 'Taken.', field: 'slotId' },
+    });
+
+    expect(shouldRetryQuery(0, conflictError)).toBe(false);
+  });
+
+  it('retries a network error', () => {
+    const networkError = toApiError(0, null);
+
+    expect(shouldRetryQuery(0, networkError)).toBe(true);
+  });
+
+  it('retries a 5xx server error', () => {
+    const serverError = toApiError(503, null);
+
+    expect(shouldRetryQuery(0, serverError)).toBe(true);
+  });
+
+  it('stops retrying once the failure count reaches the cap, even for a retryable error', () => {
+    const networkError = toApiError(0, null);
+
+    expect(shouldRetryQuery(3, networkError)).toBe(false);
+  });
+
+  it('does not retry a non-ApiError value', () => {
+    expect(shouldRetryQuery(0, new TypeError('boom'))).toBe(false);
   });
 });

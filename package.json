@@ -18,6 +18,7 @@
     "test:api": "cd apps/mock-api && .venv/bin/pytest",
     "test:angular": "npm --prefix apps/portal-angular run test:ci",
     "test:react": "npm --prefix apps/portal-react run test:ci",
+    "test:coverage": "npm run test:api && npm run test:angular && npm --prefix apps/portal-react run test:coverage",
     "test:e2e": "npm run demo:build && npm run test:e2e:only",
     "test:e2e:only": "npm --prefix e2e run test",
     "lint": "npm run lint:api && npm run lint:angular && npm run lint:react",

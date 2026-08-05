@@ -74,4 +74,46 @@ describe('ApiErrorInterceptor', () => {
     expect(captured?.code).toBe('NETWORK_ERROR');
     expect(captured?.message).toContain('Cannot reach the Pulse Health API');
   });
+
+  const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  it('sets a well-formed X-Request-Id header on the outbound request', () => {
+    http.get('/api/appointments').subscribe();
+
+    const req = httpMock.expectOne('/api/appointments');
+    const requestId = req.request.headers.get('X-Request-Id');
+
+    expect(requestId).toMatch(UUID_PATTERN);
+    req.flush([]);
+  });
+
+  it('generates a distinct id for each request rather than reusing one', () => {
+    http.get('/api/appointments').subscribe();
+    http.get('/api/providers').subscribe();
+
+    const [firstReq, secondReq] = [
+      httpMock.expectOne('/api/appointments'),
+      httpMock.expectOne('/api/providers'),
+    ];
+    const firstId = firstReq.request.headers.get('X-Request-Id');
+    const secondId = secondReq.request.headers.get('X-Request-Id');
+
+    expect(firstId).toMatch(UUID_PATTERN);
+    expect(secondId).toMatch(UUID_PATTERN);
+    expect(firstId).not.toBe(secondId);
+
+    firstReq.flush([]);
+    secondReq.flush([]);
+  });
+
+  it('respects a caller-supplied X-Request-Id instead of overwriting it', () => {
+    http
+      .get('/api/appointments', { headers: { 'X-Request-Id': 'caller-supplied-id' } })
+      .subscribe();
+
+    const req = httpMock.expectOne('/api/appointments');
+
+    expect(req.request.headers.get('X-Request-Id')).toBe('caller-supplied-id');
+    req.flush([]);
+  });
 });

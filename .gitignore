@@ -28,6 +28,11 @@ apps/mock-api/data/*.tmp
 # Mock API observability output (structured logs and exported spans)
 apps/mock-api/data/logs/
 
+# Coverage output (Vitest v8, Karma, coverage.py)
+coverage/
+htmlcov/
+.coverage
+
 # Playwright output
 e2e/test-results/
 e2e/playwright-report/

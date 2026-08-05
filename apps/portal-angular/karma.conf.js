@@ -73,8 +73,21 @@ module.exports = function (config) {
       dir: path.join(__dirname, './coverage/portal-angular'),
       subdir: '.',
       reporters: [{ type: 'html' }, { type: 'text-summary' }],
+      // Measured baseline (42 specs, --code-coverage): statements 88.77%, branches
+      // 75-76.25% (branch percentage wobbles a point or two run-to-run, see AGENTS.md/
+      // karma gotchas — timing-sensitive branches in async observable chains), functions
+      // 84.76%, lines 89.16%. Thresholds sit a few points under the lowest observed value
+      // so one new untested branch doesn't fail a build, without letting coverage rot.
+      check: {
+        global: {
+          statements: 85,
+          branches: 68,
+          functions: 80,
+          lines: 85,
+        },
+      },
     },
-    reporters: ['progress', 'kjhtml'],
+    reporters: ['progress', 'kjhtml', 'coverage'],
     browsers: ['ChromeHeadlessCI'],
     customLaunchers: {
       // --no-sandbox is required to run Chrome inside containers and CI images.

@@ -54,6 +54,24 @@ export function isApiError(value: unknown): value is ApiError {
 }
 
 /**
+ * TanStack Query `retry` predicate for queries: retry only failures a retry can
+ * plausibly fix, a network blip (`NETWORK_ERROR`, `status: 0`) or a 5xx from the API.
+ * Application errors surfaced as typed codes (`VALIDATION_ERROR`, `SLOT_ALREADY_BOOKED`,
+ * ...) are 4xx and deterministic for the same request, so retrying them just delays
+ * showing the user what already failed. Capped at 3 attempts; TanStack Query's default
+ * exponential backoff applies between them.
+ */
+export function shouldRetryQuery(failureCount: number, error: unknown): boolean {
+  if (failureCount >= 3) {
+    return false;
+  }
+  if (!isApiError(error)) {
+    return false;
+  }
+  return error.code === 'NETWORK_ERROR' || error.status >= 500;
+}
+
+/**
  * Serialises query parameters the way the Angular services did: array values are
  * repeated (`?status=a&status=b`), a `false` boolean is still sent, and empty strings
  * are dropped to match the Angular `if (query.providerId)` guards. Insertion order of
@@ -81,6 +99,8 @@ export function toQueryString(
   return serialised === '' ? '' : `?${serialised}`;
 }
 
+const REQUEST_ID_HEADER = 'X-Request-Id';
+
 /**
  * The single place the app talks to the API. It replaces Angular's
  * `ApiErrorInterceptor`: every rejection from here is an `ApiError`, never a
@@ -91,6 +111,12 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   const hasBody = init.body !== undefined && init.body !== null;
   if (hasBody && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
+  }
+  // A fresh id per call, not one shared for the app's lifetime, is what lets a single
+  // browser action be correlated to a single server log line. Respect a caller-supplied
+  // id (mirrors the API's own "use it if present" behaviour) instead of overwriting it.
+  if (!headers.has(REQUEST_ID_HEADER)) {
+    headers.set(REQUEST_ID_HEADER, crypto.randomUUID());
   }
 
   let response: Response;
