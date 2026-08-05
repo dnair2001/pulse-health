@@ -11,8 +11,8 @@ import { AppointmentsService } from '../../services/appointments.service';
 import { ProvidersService } from '../../services/providers.service';
 import { SlotsService } from '../../services/slots.service';
 
-export const REASON_MIN_LENGTH = 3;
-export const REASON_MAX_LENGTH = 500;
+const REASON_MIN_LENGTH = 3;
+const REASON_MAX_LENGTH = 500;
 
 @Component({
   selector: 'ph-appointment-schedule-page',

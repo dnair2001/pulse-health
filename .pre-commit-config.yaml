@@ -31,13 +31,16 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-json
-        # These are JSON-with-comments (tsconfig, devcontainer, VS Code); a strict JSON
-        # parser rejects them even though every tool that reads them accepts comments.
+        # These are JSON-with-comments (tsconfig, devcontainer, VS Code, and the ESLint/oxlint
+        # configs' measured-threshold rationale comments); a strict JSON parser rejects them
+        # even though every tool that reads them accepts comments.
         exclude: |
           (?x)^(
             \.devcontainer/devcontainer\.json|
             apps/portal-angular/\.vscode/.*\.json|
-            apps/.*/tsconfig.*\.json
+            apps/.*/tsconfig.*\.json|
+            apps/portal-angular/\.eslintrc\.json|
+            apps/portal-react/\.oxlintrc\.json
           )$
       - id: check-merge-conflict
       - id: detect-private-key
@@ -68,11 +71,38 @@ repos:
         pass_filenames: false
         files: ^apps/mock-api/app/.*\.py$
 
+      - id: vulture
+        name: vulture (mock-api dead code)
+        # Whole-package check, same reason as mypy above: vulture needs the whole usage
+        # graph, not a file list, to tell real dead code from a symbol only used elsewhere.
+        entry: bash -c 'cd apps/mock-api && .venv/bin/vulture'
+        language: system
+        pass_filenames: false
+        files: ^apps/mock-api/app/.*\.py$
+
+      - id: pip-extra-reqs
+        name: pip-extra-reqs (mock-api unused deps)
+        entry: bash -c 'cd apps/mock-api && .venv/bin/pip-extra-reqs --requirements-file
+          requirements.txt -r uvicorn app demo_server.py'
+        language: system
+        pass_filenames: false
+        files: ^apps/mock-api/(app/.*\.py|demo_server\.py|requirements.*\.txt)$
+
       - id: oxlint
         name: oxlint (portal-react)
         entry: apps/portal-react/node_modules/.bin/oxlint
         language: system
         files: ^apps/portal-react/src/.*\.(ts|tsx|js|jsx)$
+
+      - id: knip-react
+        name: knip (portal-react dead code)
+        # Whole-project check, same reason as vulture above. knip resolves its config and
+        # entry points relative to the current directory, not the entry binary's path, so
+        # this needs an explicit cd the same way mypy's hook does.
+        entry: bash -c 'cd apps/portal-react && node_modules/.bin/knip'
+        language: system
+        pass_filenames: false
+        files: ^apps/portal-react/(src/.*\.(ts|tsx)|package\.json)$
 
       - id: eslint-angular
         name: eslint (portal-angular)
@@ -80,6 +110,21 @@ repos:
           apps/portal-angular
         language: system
         files: ^apps/portal-angular/src/.*\.ts$
+
+      - id: knip-angular
+        name: knip (portal-angular dead code)
+        # Same reason as knip-react above: knip needs to run from the app directory.
+        entry: bash -c 'cd apps/portal-angular && node_modules/.bin/knip'
+        language: system
+        pass_filenames: false
+        files: ^apps/portal-angular/(src/.*\.ts|package\.json)$
+
+      - id: jscpd
+        name: jscpd (duplicate code, all apps)
+        entry: node_modules/.bin/jscpd -c .jscpd.json
+        language: system
+        pass_filenames: false
+        files: \.(py|ts|tsx|html)$
 
       - id: prettier
         name: prettier

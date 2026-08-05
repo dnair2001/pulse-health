@@ -1,0 +1,46 @@
+# Prometheus alerting rules for the metrics exposed at GET /metrics
+# (app/observability/metrics.py). Not wired into any scrape/alert pipeline by default —
+# this repo doesn't run Prometheus or Alertmanager — but the rule group is a syntactically
+# valid starting point for anyone who points a Prometheus instance at this demo.
+#
+# Validate with: promtool check rules apps/mock-api/prometheus/alerts.yml
+groups:
+  - name: pulse-frontend
+    rules:
+      - alert: PulseFrontendElevatedErrorRate
+        # pulse_frontend_events_total{source,level} increments once per POST /api/telemetry
+        # call; level is a closed enum (see app/observability/metrics.py), so this never
+        # needs an aggregation across unbounded label values.
+        expr: sum(rate(pulse_frontend_events_total{level="error"}[5m])) > 0.1
+        # 10 minutes: long enough to ride out a single reload storm or a transient bad
+        # deploy of one frontend without paging, short enough that a real regression in
+        # error.name reporting (see AGENTS.md's telemetry section) surfaces within a
+        # demo/review session rather than being missed entirely.
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated frontend error rate reported via telemetry"
+          description: >-
+            Frontend error events (pulse_frontend_events_total{level="error"}) have
+            averaged more than 0.1/s over the last 5 minutes for 10 minutes straight.
+            Check recent deploys of portal-react / portal-angular and the mock-api
+            /api/telemetry logs for the reported error.name values.
+
+      - alert: PulseAppointmentBookingErrorRateHigh
+        # pulse_http_requests_total{route} labels use the route template, never the
+        # concrete path, so this is safe to alert on without label-cardinality risk.
+        expr: >-
+          sum(rate(pulse_http_requests_total{route="/api/appointments", status=~"5.."}[5m]))
+            /
+          sum(rate(pulse_http_requests_total{route="/api/appointments"}[5m]))
+            > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High server-error rate booking appointments"
+          description: >-
+            More than 5% of requests to POST /api/appointments have returned a 5xx
+            status over the last 5 minutes. This is the core booking flow; investigate
+            the mock-api logs (data/logs/api.log) immediately.

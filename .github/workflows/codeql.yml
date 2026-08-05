@@ -1,0 +1,52 @@
+name: CodeQL
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # 04:41 UTC weekly (Wednesdays). Off-the-hour to avoid GitHub's cron congestion.
+    - cron: '41 4 * * 3'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+
+      # No root npm workspace exists (each frontend has its own package-lock.json), so
+      # CodeQL's JS/TS autobuild has nothing to build against and would otherwise only get
+      # partial type information from source text alone. Installing both frontends'
+      # node_modules before the JS/TS analyze step lets the extractor resolve imports and
+      # types properly; it's a no-op for the python matrix leg since only .py sources exist
+      # for that language pass.
+      - uses: actions/setup-node@v4
+        if: matrix.language == 'javascript-typescript'
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install frontend dependencies
+        if: matrix.language == 'javascript-typescript'
+        run: |
+          npm ci --prefix apps/portal-angular
+          npm ci --prefix apps/portal-react
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      # No compiled build step for either language: Python needs none, and JS/TS analysis
+      # runs CodeQL's no-build extraction over the checked-out source (now with
+      # node_modules present for import resolution) rather than an explicit autobuild.
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'

@@ -34,7 +34,7 @@ function isEnvelope(body: unknown): body is ApiErrorEnvelope {
   return typeof error === 'object' && error !== null && 'code' in error;
 }
 
-export function toApiError(response: HttpErrorResponse): ApiError {
+function toApiError(response: HttpErrorResponse): ApiError {
   if (response.status === 0) {
     return {
       code: 'NETWORK_ERROR',

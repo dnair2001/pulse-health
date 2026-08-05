@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-export type NotificationVariant = 'success' | 'error' | 'info';
+type NotificationVariant = 'success' | 'error' | 'info';
 
 export interface Notification {
   variant: NotificationVariant;

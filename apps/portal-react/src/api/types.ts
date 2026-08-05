@@ -37,7 +37,7 @@ export interface VisitType {
   durationMinutes: number;
 }
 
-export interface ProviderSummary {
+interface ProviderSummary {
   id: string;
   name: string;
   specialty: string;
@@ -101,6 +101,3 @@ export interface ScheduleRequest {
 export interface RescheduleRequest {
   slotId: string;
 }
-
-export type ScheduleAppointmentRequest = ScheduleRequest;
-export type RescheduleAppointmentRequest = RescheduleRequest;

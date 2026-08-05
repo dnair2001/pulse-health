@@ -33,13 +33,15 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 | `npm start` | All three dev servers: API `:8000`, Angular `:4200`, React `:4300` |
 | `npm test` | Unit suite: 133 pytest + 64 Karma + 86 Vitest = **283** |
 | `npm run test:e2e` | Builds, then runs the 25 Playwright specs against both frontends |
-| `npm run lint` | ruff + Angular eslint + oxlint |
+| `npm run lint` | ruff + Angular eslint + oxlint, each including a complexity budget (see below) |
 | `npm run typecheck` | mypy (strict) + Angular tsc + React tsc |
 | `npm run format` / `format:check` | Prettier over TS/JS/JSON/YAML |
 | `npm run build` | Production bundles for both frontends |
 | `npm run demo` | Builds, then serves **both** frontends + API on `:8080` |
 | `npm run reset:data` | Reseeds the mock API relative to now (needs the API running) |
 | `npm run generate:openapi` | Regenerates `apps/mock-api/openapi.json` from the live schema; CI fails if it's stale |
+| `npm run check:duplication` | jscpd duplicate-code budget across all three apps (`.jscpd.json`) |
+| `npm run check:doc-freshness` | Confirms this file's/README's/CONTRIBUTING's/the PR template's documented test counts still match the live suites |
 
 Both frontends proxy `/api` to `localhost:8000`, so the API must be running for either to show
 data. Per-app variants exist for tight loops: `test:api`, `test:angular`, `test:react`, and the
@@ -51,6 +53,45 @@ and keeping the unit suite fast matters more than a single entry point.
 The demo server (`apps/mock-api/demo_server.py`) serves Angular at `/`, React at `/react/`, the
 API at `/api`, and a landing page at `/demo`. It reads pre-built bundles, so run `npm run demo`
 (which builds first) rather than `demo:serve` alone.
+
+## Static analysis, SAST and alerting
+
+Beyond lint/typecheck/test, each app carries a **measured-baseline** budget: thresholds are set
+at (or just above) what the codebase measured when the check was added, not at some aspirational
+number, so they catch new regressions without demanding an unrelated rewrite to pass.
+
+- **Complexity** — ruff's `C90`/mccabe for mock-api (`pyproject.toml`, `max-complexity = 10`),
+  `complexity`/`max-depth`/`max-lines-per-function` in Angular's `.eslintrc.json` and React's
+  `.oxlintrc.json` (both `overrides`-scoped off for spec/test files, since test callbacks trip
+  these for reasons unrelated to production code quality).
+- **Dead code / unused dependencies** — `vulture` + `pip-extra-reqs` for mock-api (run directly
+  via `apps/mock-api/.venv/bin/...`; config lives in `pyproject.toml`); `knip` for each frontend
+  (`npm run lint:deadcode` in `apps/portal-angular` or `apps/portal-react`; `knip.ts`/`knip.json`
+  carry the framework false-positives — Angular schematics/template-parser/puppeteer — that
+  knip's static import graph can't see).
+- **Duplicate code** — `jscpd` at the root (`.jscpd.json`, `npm run check:duplication`), scanning
+  all three apps' source. Deliberately excludes the three byte-identical stylesheet files (hard
+  invariant 3 below) — that "duplication" is intentional, not a defect.
+
+All of the above run in CI (see `.github/workflows/ci.yml`'s `api`/`angular`/`react-static`/
+`quality` jobs) and as local pre-commit hooks.
+
+**SAST** — `.github/workflows/codeql.yml` runs CodeQL over `python` and `javascript-typescript`
+on every PR, push to `main`, and weekly. It is a separate workflow, not a required check in
+`ci.yml`.
+
+**Automated PR review** — deferred. The plan is a `droid-review.yml` workflow running Factory
+Droid's automatic code + security review on every PR, since branch protection here requires zero
+human approvals and this would give every PR at least one review regardless. Blocked on the
+Factory Droid GitHub App being installed on this repo, which currently fails with a Factory-side
+org-permission error before the GitHub App install step completes. No workflow file exists in the
+repo yet, so there's no check to see or ignore on PRs — this is a clean gap, not a broken one.
+
+**Alerting** — `apps/mock-api/prometheus/alerts.yml` defines Prometheus alerting rules against
+the metrics in `app/observability/metrics.py` (frontend error rate, booking 5xx rate). Nothing in
+this repo runs Prometheus/Alertmanager, so these rules are not wired to page anyone; CI validates
+them with `promtool check rules` so they stay syntactically correct for whoever does point a real
+Prometheus at this demo.
 
 ## Hard invariants
 
@@ -154,6 +195,7 @@ re-achieved by hand, and port style changes by copying rather than by editing bo
 npm run lint && npm run typecheck && npm test && npm run build
 TZ=America/New_York npm run test:react
 npm run test:e2e        # required for anything touching rendered output or the demo server
+npm run check:duplication && npm run check:doc-freshness
 ```
 
 For changes to user-visible strings or date rendering, `test:e2e` is not optional: it is the only

@@ -22,13 +22,17 @@ Always use the root scripts rather than per-app invocations.
 | --- | --- |
 | `npm start` | All three dev servers: API `:8000`, Angular `:4200`, React `:4300` |
 | `npm test` | Full suite: 133 pytest + 64 Karma + 86 Vitest = 283 |
-| `npm run lint` | ruff + Angular eslint + oxlint |
+| `npm run lint` | ruff + Angular eslint + oxlint (each includes a complexity budget — see AGENTS.md) |
 | `npm run build` | Production bundles for both frontends |
 | `npm run demo` | Builds, then serves both frontends + API on `:8080` |
 | `npm run reset:data` | Reseeds the mock API relative to now (API must be running) |
+| `npm run check:duplication` | jscpd duplicate-code budget across all three apps |
+| `npm run check:doc-freshness` | Confirms the test counts documented in AGENTS.md/README.md/CONTRIBUTING.md/the PR template still match the live suites |
 
 Per-app variants exist for tight loops: `test:api`, `test:angular`, `test:react`, and the same
-pattern for `lint:` and `build:`.
+pattern for `lint:` and `build:`. Dead-code/unused-dependency checks run per app too: `knip`
+(`npm run lint:deadcode` in each frontend) and, for mock-api, `vulture` + `pip-extra-reqs`
+(run directly via its venv — see AGENTS.md).
 
 Both frontends proxy `/api` to `localhost:8000`, so the API must be running for either to show
 data.
@@ -52,6 +56,7 @@ These are defects when broken, not style preferences. Full text in
 npm run lint && npm test && npm run build
 TZ=America/New_York npm run test:react
 npm run typecheck && npm run format:check
+npm run check:duplication && npm run check:doc-freshness
 ```
 
 All of these must pass. For changes to user-visible strings or date rendering, also verify

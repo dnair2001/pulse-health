@@ -16,6 +16,7 @@ Definition of done (see [AGENTS.md](../AGENTS.md)):
 - [ ] `npm run build` passes
 - [ ] `TZ=America/New_York npm run test:react` passes — non-UTC runs have caught real
       date-formatting bugs that `TZ=UTC` hid
+- [ ] `npm run check:duplication` and `npm run check:doc-freshness` pass
 
 Invariants:
 
