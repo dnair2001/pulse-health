@@ -6,10 +6,12 @@ import {
   HttpRequest,
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { ApiError, ApiErrorCode, ApiErrorEnvelope } from '../models';
+import { TelemetryService } from '../observability/telemetry.service';
 
 const KNOWN_CODES: ApiErrorCode[] = [
   'VALIDATION_ERROR',
@@ -64,13 +66,34 @@ export function toApiError(response: HttpErrorResponse): ApiError {
  */
 @Injectable()
 export class ApiErrorInterceptor implements HttpInterceptor {
+  constructor(
+    private readonly telemetry: TelemetryService,
+    private readonly router: Router,
+  ) {}
+
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const withRequestId = request.headers.has(REQUEST_ID_HEADER)
       ? request
       : request.clone({ setHeaders: { [REQUEST_ID_HEADER]: crypto.randomUUID() } });
 
-    return next
-      .handle(withRequestId)
-      .pipe(catchError((response: HttpErrorResponse) => throwError(() => toApiError(response))));
+    return next.handle(withRequestId).pipe(
+      catchError((response: HttpErrorResponse) => {
+        const apiError = toApiError(response);
+        // 0 (unreachable) and 5xx are server/network-side failures worth alerting
+        // on; an UNKNOWN code means we couldn't even parse the error envelope,
+        // which is itself a signal something's off. Everything else (4xx with a
+        // recognised code) is expected user-facing validation, hence 'warn'.
+        const level =
+          apiError.status === 0 || apiError.status >= 500 || apiError.code === 'UNKNOWN'
+            ? 'error'
+            : 'warn';
+        this.telemetry.reportEvent(level, apiError.message, {
+          route: this.router.url,
+          requestId: withRequestId.headers.get(REQUEST_ID_HEADER) ?? undefined,
+          errorCode: apiError.code,
+        });
+        return throwError(() => apiError);
+      }),
+    );
   }
 }

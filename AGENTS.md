@@ -31,7 +31,7 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 | Command | What it does |
 | --- | --- |
 | `npm start` | All three dev servers: API `:8000`, Angular `:4200`, React `:4300` |
-| `npm test` | Unit suite: 116 pytest + 42 Karma + 62 Vitest = **220** |
+| `npm test` | Unit suite: 133 pytest + 63 Karma + 83 Vitest = **279** |
 | `npm run test:e2e` | Builds, then runs the 25 Playwright specs against both frontends |
 | `npm run lint` | ruff + Angular eslint + oxlint |
 | `npm run typecheck` | mypy (strict) + Angular tsc + React tsc |
@@ -39,6 +39,7 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 | `npm run build` | Production bundles for both frontends |
 | `npm run demo` | Builds, then serves **both** frontends + API on `:8080` |
 | `npm run reset:data` | Reseeds the mock API relative to now (needs the API running) |
+| `npm run generate:openapi` | Regenerates `apps/mock-api/openapi.json` from the live schema; CI fails if it's stale |
 
 Both frontends proxy `/api` to `localhost:8000`, so the API must be running for either to show
 data. Per-app variants exist for tight loops: `test:api`, `test:angular`, `test:react`, and the
@@ -88,6 +89,18 @@ that **nothing is required to configure**: logs go to stdout and `data/logs/api.
 contract is untouched. Tracing is off during tests (`OTEL_SDK_DISABLED=true` via pytest-env).
 Metric labels use the route **template**, never the concrete path, so appointment ids can never
 become label values.
+
+`POST /api/telemetry` is where both frontends' logging/error events land, folded into the same
+JSON logs and Prometheus registry (`pulse_frontend_events_total`, labels `source`/`level`, so at
+most 6 label combinations ever). Its request schema is deliberately closed (`source`, `level`,
+`message`, `route`, `requestId`, `errorCode`; no open-ended context object): the log scrubber
+above only guards field *names*, not the *content* of a value it already trusts, so an arbitrary
+`context: dict` here would be a way to tunnel free text past that guard. Both frontends call it
+through a small `reportEvent`/`checkApiHealth` module rather than posting to it directly — see
+`apps/portal-react/src/observability/telemetry.ts` and
+`apps/portal-angular/src/app/core/observability/telemetry.service.ts`. Neither frontend has any
+*visible* UI for this (no banner, no status indicator): it's instrumentation only, kept that way
+so it can't put invariant 3 (byte-identical rendered text) at risk.
 
 **`e2e/`** — Playwright, chromium only, its own `package.json`. Runs every user flow twice, once
 per implementation, and resets API state around each test. It is the only place invariant 3 is

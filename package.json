@@ -35,6 +35,7 @@
     "build:angular": "npm --prefix apps/portal-angular run build",
     "build:react": "npm --prefix apps/portal-react run build",
     "reset:data": "curl -fsS -X POST http://localhost:8000/api/dev/reset && echo",
+    "generate:openapi": "cd apps/mock-api && PYTHONPATH=. .venv/bin/python scripts/generate_openapi.py",
     "demo": "npm run demo:build && npm run demo:serve",
     "demo:build": "npm run build:angular && npm --prefix apps/portal-react run build:demo",
     "demo:serve": "cd apps/mock-api && .venv/bin/uvicorn demo_server:app --host 0.0.0.0 --port 8080"

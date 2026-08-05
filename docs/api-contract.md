@@ -104,6 +104,7 @@ Every slot is 30 minutes long.
 | PATCH | `/api/appointments/{id}` | 200 | `{slotId}` — this is reschedule |
 | POST | `/api/appointments/{id}/cancel` | 200 | no body |
 | POST | `/api/dev/reset` | 200 | `{"status":"reset"}` |
+| POST | `/api/telemetry` | **204** | `{source, level, message, route?, requestId?, errorCode?}` — frontend logging/error reporting, not a domain resource |
 
 ### GET /api/slots
 

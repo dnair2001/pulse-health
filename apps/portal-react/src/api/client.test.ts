@@ -1,7 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { isApiError, request, shouldRetryQuery, toApiError, toQueryString } from './client';
+import { reportEvent } from '../observability/telemetry';
 import { errorResponse, jsonResponse } from '../test/helpers';
+
+vi.mock('../observability/telemetry', () => ({
+  reportEvent: vi.fn(),
+}));
 
 const FALLBACK_MESSAGE = 'Something went wrong. Please try again.';
 const OFFLINE_MESSAGE = 'Cannot reach the Pulse Health API. Check that it is running on port 8000.';
@@ -143,6 +148,56 @@ describe('request', () => {
     expect(firstId).toMatch(UUID_PATTERN);
     expect(secondId).toMatch(UUID_PATTERN);
     expect(firstId).not.toBe(secondId);
+  });
+
+  it('reports a network failure to telemetry with level error', async () => {
+    globalThis.fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    await request('/api/providers').catch(() => {});
+
+    expect(reportEvent).toHaveBeenCalledWith(
+      'error',
+      OFFLINE_MESSAGE,
+      expect.objectContaining({ errorCode: 'NETWORK_ERROR' }),
+    );
+  });
+
+  it('reports a 4xx application error to telemetry with level warn', async () => {
+    globalThis.fetchMock.mockResolvedValueOnce(
+      errorResponse(422, 'VALIDATION_ERROR', 'Reason is too short.', 'reason'),
+    );
+
+    await request('/api/appointments', { method: 'POST', body: '{}' }).catch(() => {});
+
+    expect(reportEvent).toHaveBeenCalledWith(
+      'warn',
+      'Reason is too short.',
+      expect.objectContaining({ errorCode: 'VALIDATION_ERROR' }),
+    );
+  });
+
+  it('reports a 5xx response to telemetry with level error', async () => {
+    globalThis.fetchMock.mockResolvedValueOnce(errorResponse(503, 'UNKNOWN', 'down', null));
+
+    await request('/api/providers').catch(() => {});
+
+    expect(reportEvent).toHaveBeenCalledWith(
+      'error',
+      'down',
+      expect.objectContaining({ errorCode: 'UNKNOWN' }),
+    );
+  });
+
+  it('passes the request X-Request-Id and current pathname through to telemetry', async () => {
+    globalThis.fetchMock.mockResolvedValueOnce(errorResponse(404, 'NOT_FOUND', 'gone', null));
+
+    await request('/api/providers', { headers: { 'X-Request-Id': 'fixed-id' } }).catch(() => {});
+
+    expect(reportEvent).toHaveBeenCalledWith(
+      'warn',
+      'gone',
+      expect.objectContaining({ requestId: 'fixed-id', route: window.location.pathname }),
+    );
   });
 
   it('respects a caller-supplied X-Request-Id instead of overwriting it', async () => {
