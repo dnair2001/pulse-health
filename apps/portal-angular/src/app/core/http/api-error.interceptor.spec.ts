@@ -1,18 +1,27 @@
 import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 
 import { ApiError } from '../models';
+import { TelemetryService } from '../observability/telemetry.service';
 import { ApiErrorInterceptor } from './api-error.interceptor';
 
 describe('ApiErrorInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
+  let telemetry: jasmine.SpyObj<TelemetryService>;
 
   beforeEach(() => {
+    telemetry = jasmine.createSpyObj<TelemetryService>('TelemetryService', ['reportEvent']);
+
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [{ provide: HTTP_INTERCEPTORS, useClass: ApiErrorInterceptor, multi: true }],
+      providers: [
+        { provide: HTTP_INTERCEPTORS, useClass: ApiErrorInterceptor, multi: true },
+        { provide: TelemetryService, useValue: telemetry },
+        { provide: Router, useValue: { url: '/appointments/schedule' } },
+      ],
     });
 
     http = TestBed.inject(HttpClient);
@@ -104,6 +113,45 @@ describe('ApiErrorInterceptor', () => {
 
     firstReq.flush([]);
     secondReq.flush([]);
+  });
+
+  it('reports a network failure to telemetry as an error with the outbound request id', () => {
+    let captured: ApiError | undefined;
+
+    http.get('/api/appointments').subscribe({ error: (error: ApiError) => (captured = error) });
+    const req = httpMock.expectOne('/api/appointments');
+    const requestId = req.request.headers.get('X-Request-Id');
+    req.error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+
+    expect(captured?.code).toBe('NETWORK_ERROR');
+    expect(telemetry.reportEvent).toHaveBeenCalledWith('error', captured!.message, {
+      route: '/appointments/schedule',
+      requestId: requestId ?? undefined,
+      errorCode: 'NETWORK_ERROR',
+    });
+  });
+
+  it('reports a 4xx failure to telemetry as a warn', () => {
+    const error = captureError(409, {
+      error: { code: 'SLOT_ALREADY_BOOKED', message: 'That slot is taken.', field: 'slotId' },
+    });
+
+    expect(telemetry.reportEvent).toHaveBeenCalledWith(
+      'warn',
+      'That slot is taken.',
+      jasmine.objectContaining({ errorCode: 'SLOT_ALREADY_BOOKED' }),
+    );
+    expect(error.code).toBe('SLOT_ALREADY_BOOKED');
+  });
+
+  it('reports a 5xx failure to telemetry as an error', () => {
+    captureError(500, { error: { code: 'KABOOM', message: 'Server exploded', field: null } });
+
+    expect(telemetry.reportEvent).toHaveBeenCalledWith(
+      'error',
+      'Server exploded',
+      jasmine.objectContaining({ errorCode: 'UNKNOWN' }),
+    );
   });
 
   it('respects a caller-supplied X-Request-Id instead of overwriting it', () => {

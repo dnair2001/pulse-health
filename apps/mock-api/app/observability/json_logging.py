@@ -77,6 +77,11 @@ _SAFE_EXTRA_FIELDS = frozenset(
         # uvicorn's own logging sets this alongside `message` for coloured
         # console output; it is a copy of the log text uvicorn already emits.
         "color_message",
+        # POST /api/telemetry (app/api/telemetry.py): closed-enum or bounded-length
+        # fields from FrontendEvent, never open-ended free text like `reason`.
+        "source",
+        "clientRequestId",
+        "errorCode",
     }
 )
 

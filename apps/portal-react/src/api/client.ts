@@ -1,3 +1,4 @@
+import { reportEvent } from '../observability/telemetry';
 import type { ApiError, ApiErrorCode, ApiErrorEnvelope } from './types';
 
 /** Codes the API is contracted to send. Anything else is reported as `UNKNOWN`. */
@@ -102,6 +103,22 @@ export function toQueryString(
 const REQUEST_ID_HEADER = 'X-Request-Id';
 
 /**
+ * Reports an `ApiError` about to be thrown from `request()`. Severity mirrors the same
+ * network/5xx-vs-4xx split `shouldRetryQuery` uses below: a network failure, 5xx, or an
+ * unrecognised code is a real system-level problem (`error`); a known 4xx domain error
+ * is expected and actionable by the user (`warn`).
+ */
+function reportApiError(error: ApiError, headers: Headers): void {
+  const level =
+    error.status === 0 || error.status >= 500 || error.code === 'UNKNOWN' ? 'error' : 'warn';
+  reportEvent(level, error.message, {
+    errorCode: error.code,
+    requestId: headers.get(REQUEST_ID_HEADER) ?? undefined,
+    route: window.location.pathname,
+  });
+}
+
+/**
  * The single place the app talks to the API. It replaces Angular's
  * `ApiErrorInterceptor`: every rejection from here is an `ApiError`, never a
  * `TypeError` from `fetch` or a `SyntaxError` from a malformed body.
@@ -123,7 +140,9 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   try {
     response = await fetch(path, { ...init, headers });
   } catch {
-    throw toApiError(0, null);
+    const error = toApiError(0, null);
+    reportApiError(error, headers);
+    throw error;
   }
 
   let raw: string;
@@ -131,7 +150,9 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     raw = await response.text();
   } catch {
     // The status arrived but the stream broke, so this is a transport failure.
-    throw toApiError(0, null);
+    const error = toApiError(0, null);
+    reportApiError(error, headers);
+    throw error;
   }
 
   let body: unknown = null;
@@ -139,12 +160,16 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     try {
       body = JSON.parse(raw) as unknown;
     } catch {
-      throw toApiError(response.status, raw);
+      const error = toApiError(response.status, raw);
+      reportApiError(error, headers);
+      throw error;
     }
   }
 
   if (!response.ok) {
-    throw toApiError(response.status, body);
+    const error = toApiError(response.status, body);
+    reportApiError(error, headers);
+    throw error;
   }
 
   return body as T;

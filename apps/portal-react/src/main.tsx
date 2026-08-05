@@ -6,7 +6,24 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { shouldRetryQuery } from './api/client';
 import { NotificationProvider } from './notifications/NotificationProvider';
+import { checkApiHealth, reportEvent } from './observability/telemetry';
 import './styles/global.scss';
+
+window.addEventListener('error', (e) => {
+  reportEvent('error', e.message ?? 'uncaught error', {
+    route: window.location.pathname,
+    errorCode: 'UNCAUGHT_EXCEPTION',
+  });
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  reportEvent('error', e.reason?.message ?? String(e.reason), {
+    route: window.location.pathname,
+    errorCode: 'UNHANDLED_REJECTION',
+  });
+});
+
+checkApiHealth();
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -21,7 +21,7 @@ Always use the root scripts rather than per-app invocations.
 | Command | What it does |
 | --- | --- |
 | `npm start` | All three dev servers: API `:8000`, Angular `:4200`, React `:4300` |
-| `npm test` | Full suite: 121 pytest + 45 Karma + 71 Vitest = 237 |
+| `npm test` | Full suite: 133 pytest + 63 Karma + 83 Vitest = 279 |
 | `npm run lint` | ruff + Angular eslint + oxlint |
 | `npm run build` | Production bundles for both frontends |
 | `npm run demo` | Builds, then serves both frontends + API on `:8080` |

@@ -2,18 +2,32 @@ import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import { AppComponent } from './app.component';
+import { TelemetryService } from './core/observability/telemetry.service';
 
 describe('AppComponent', () => {
+  let telemetry: jasmine.SpyObj<TelemetryService>;
+
   beforeEach(async () => {
+    telemetry = jasmine.createSpyObj<TelemetryService>('TelemetryService', [
+      'reportEvent',
+      'checkApiHealth',
+    ]);
+
     await TestBed.configureTestingModule({
       declarations: [AppComponent],
       imports: [RouterTestingModule],
+      providers: [{ provide: TelemetryService, useValue: telemetry }],
     }).compileComponents();
   });
 
   it('creates the app shell', () => {
     const fixture = TestBed.createComponent(AppComponent);
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('checks API health once at bootstrap', () => {
+    TestBed.createComponent(AppComponent);
+    expect(telemetry.checkApiHealth).toHaveBeenCalledTimes(1);
   });
 
   it('renders the Pulse Health brand and the signed-in patient', () => {

@@ -32,6 +32,20 @@ def observe_request(method: str, route: str, status: int, duration_seconds: floa
     REQUEST_LATENCY.labels(*labels).observe(duration_seconds)
 
 
+# `source` and `level` are both closed enums on FrontendEvent (app/api/telemetry.py), so this
+# carries the same zero-cardinality-risk guarantee as the HTTP metrics above: at most 2 * 3
+# label combinations, ever.
+FRONTEND_EVENTS = Counter(
+    "pulse_frontend_events_total",
+    "Structured events reported by a frontend via POST /api/telemetry, by source app and level.",
+    ("source", "level"),
+)
+
+
+def observe_frontend_event(source: str, level: str) -> None:
+    FRONTEND_EVENTS.labels(source, level).inc()
+
+
 class AppointmentsCollector(Collector):
     """Reports the live appointment counts per status straight from the store."""
 

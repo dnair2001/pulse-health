@@ -97,7 +97,7 @@ npm run setup   # backend venv + Angular dependencies
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
 | `npm run start:angular` | `ng serve`, http://localhost:4200 |
 | `npm run start:react` | `vite`, http://localhost:4300 |
-| `npm test` | all three unit suites (121 + 45 + 71 = 237 tests) |
+| `npm test` | all three unit suites (133 + 63 + 83 = 279 tests) |
 | `npm run test:api` / `test:angular` / `test:react` | one suite only |
 | `npm run test:e2e` | 25 Playwright specs driving both frontends in a real browser |
 | `npm run lint` | ruff, then eslint, then oxlint |
@@ -200,22 +200,24 @@ Enforced in the API and surfaced in the UI:
 npm test
 ```
 
-- **API, 121 tests.** Every rule and error code, filter and ordering behaviour, the error envelope
+- **API, 133 tests.** Every rule and error code, filter and ordering behaviour, the error envelope
   shape for malformed bodies, slot freeing on cancel and swapping on reschedule, and persistence
   across a store reload. Plus observability: correlation ids, metric label cardinality, the JSON
-  log line's shape, the log scrubber's allowlist, and two tests that pin the `/api` payload and
-  error-envelope shapes so the frozen contract cannot drift.
-- **React, 71 tests.** The same ground as the Angular suite in the React idiom: the client's error
-  normalisation and query-string building (plus the `X-Request-Id` header and query retry
-  predicate), query-key isolation and cache invalidation, the shared primitives and date helpers,
-  the three components, and the three pages including the orderings that keep a page banner and a
-  field-level server error from disagreeing. Green under any `TZ`.
-- **Angular, 45 tests.** Service URLs and query params, the error interceptor's normalisation
-  including network failure and the `X-Request-Id` header it stamps, the `ControlValueAccessor`
-  slot picker, reactive form validation, the pipe and validator, plus component tests for the list
-  page (loading, empty, filtered empty, error with retry, cancel confirmation accepted and
-  dismissed, cancel rejection) and the schedule page (validation, submission, server error
-  mapping, availability refresh).
+  log line's shape, the log scrubber's allowlist, and POST /api/telemetry's validation and
+  logging/metrics fan-out, and two tests that pin the `/api` payload and error-envelope shapes so
+  the frozen contract cannot drift.
+- **React, 83 tests.** The same ground as the Angular suite in the React idiom: the client's error
+  normalisation and query-string building (plus the `X-Request-Id` header, the query retry
+  predicate, and reporting failures to `/api/telemetry`), query-key isolation and cache
+  invalidation, the shared primitives and date helpers, the three components, and the three pages
+  including the orderings that keep a page banner and a field-level server error from
+  disagreeing. Green under any `TZ`.
+- **Angular, 63 tests.** Service URLs and query params, the error interceptor's normalisation
+  including network failure, the `X-Request-Id` header it stamps, and reporting failures to
+  `/api/telemetry`, the global `ErrorHandler`, the `ControlValueAccessor` slot picker, reactive
+  form validation, the pipe and validator, plus component tests for the list page (loading, empty,
+  filtered empty, error with retry, cancel confirmation accepted and dismissed, cancel rejection)
+  and the schedule page (validation, submission, server error mapping, availability refresh).
 
 ```bash
 npm run test:e2e
