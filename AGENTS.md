@@ -80,10 +80,12 @@ All of the above run in CI (see `.github/workflows/ci.yml`'s `api`/`angular`/`re
 on every PR, push to `main`, and weekly. It is a separate workflow, not a required check in
 `ci.yml`.
 
-**Automated PR review** — `.github/workflows/droid-review.yml` runs Factory Droid's automatic
-code + security review on every PR (`FACTORY_API_KEY` repo secret required). This exists because
-branch protection here requires zero human approvals; it gives every PR at least one review
-regardless.
+**Automated PR review** — deferred. The plan is a `droid-review.yml` workflow running Factory
+Droid's automatic code + security review on every PR, since branch protection here requires zero
+human approvals and this would give every PR at least one review regardless. Blocked on the
+Factory Droid GitHub App being installed on this repo, which currently fails with a Factory-side
+org-permission error before the GitHub App install step completes. No workflow file exists in the
+repo yet, so there's no check to see or ignore on PRs — this is a clean gap, not a broken one.
 
 **Alerting** — `apps/mock-api/prometheus/alerts.yml` defines Prometheus alerting rules against
 the metrics in `app/observability/metrics.py` (frontend error rate, booking 5xx rate). Nothing in
