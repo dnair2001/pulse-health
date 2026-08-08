@@ -28,7 +28,13 @@ REASON_MAX_LENGTH = 500
 _APPOINTMENT_ID_PREFIX = "apt_"
 _PRESCRIPTION_ID_PREFIX = "rx_"
 
-_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+# Local and domain parts are matched separately (rather than in one pattern with a
+# shared `.` boundary) so a crafted string like "!@!." x N can't make the engine
+# backtrack through every split point between the two `+` groups: see CVE-style
+# ReDoS reports against the common `^[^@\s]+@[^@\s]+\.[^@\s]+$` email pattern.
+EMAIL_MAX_LENGTH = 254
+_EMAIL_LOCAL_PATTERN = re.compile(r"^[^@\s]+$")
+_EMAIL_DOMAIN_PATTERN = re.compile(r"^[^@\s]+$")
 _PHONE_PATTERN = re.compile(r"^[0-9()+\-.\s]{7,20}$")
 
 
@@ -309,8 +315,20 @@ def to_patient_profile(patient: Patient) -> PatientProfile:
 
 def validate_email(raw: str, field: str = "email") -> str:
     email = raw.strip()
-    if not email or not _EMAIL_PATTERN.match(email):
-        raise validation_error("Please enter a valid email address.", field)
+    invalid = validation_error("Please enter a valid email address.", field)
+    if not email or len(email) > EMAIL_MAX_LENGTH:
+        raise invalid
+    local, _, domain = email.partition("@")
+    if (
+        not local
+        or not domain
+        or "." not in domain
+        or domain.startswith(".")
+        or domain.endswith(".")
+        or not _EMAIL_LOCAL_PATTERN.match(local)
+        or not _EMAIL_DOMAIN_PATTERN.match(domain)
+    ):
+        raise invalid
     return email
 
 
