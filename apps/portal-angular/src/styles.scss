@@ -302,6 +302,24 @@ h4 {
   }
 }
 
+.profile-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin: 0 0 1.25rem;
+
+  dt {
+    color: var(--ph-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  dd {
+    margin: 0.125rem 0 0;
+  }
+}
+
 .slot-picker {
   display: flex;
   flex-direction: column;

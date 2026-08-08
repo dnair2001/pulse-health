@@ -28,6 +28,8 @@ test.describe('provider directory', () => {
   test('an unknown provider id shows the not-found error', async ({ page }) => {
     await page.goto('/providers/prv_does_not_exist');
 
-    await expect(page.getByTestId('alert-banner')).toContainText('We could not find that provider.');
+    await expect(page.getByTestId('alert-banner')).toContainText(
+      'We could not find that provider.',
+    );
   });
 });

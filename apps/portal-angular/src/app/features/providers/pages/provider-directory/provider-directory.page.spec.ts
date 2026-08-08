@@ -71,7 +71,10 @@ describe('ProviderDirectoryPageComponent', () => {
 
   it('filters by name or specialty as the search term changes', () => {
     providerDirectory.list.and.returnValue(
-      of([provider(), provider({ id: 'prv_002', name: 'Dr. Marcus Bell', specialty: 'Dermatology' })]),
+      of([
+        provider(),
+        provider({ id: 'prv_002', name: 'Dr. Marcus Bell', specialty: 'Dermatology' }),
+      ]),
     );
 
     fixture.detectChanges();

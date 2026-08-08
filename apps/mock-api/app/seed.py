@@ -9,6 +9,7 @@ from datetime import UTC, date, datetime, time, timedelta
 from app.domain.models import (
     AppointmentRecord,
     AppointmentStatus,
+    Patient,
     Provider,
     Slot,
     StoreData,
@@ -77,6 +78,24 @@ PROVIDERS: tuple[Provider, ...] = (
     ),
 )
 
+# The portal has no login; this is the one patient the demo is told from the
+# perspective of, matching the name the shell header hardcodes.
+PATIENT = Patient(
+    id="pat_001",
+    name="Jordan Reyes",
+    date_of_birth=date(1985, 6, 12),
+    ssn="231-45-6789",
+    insurance_member_id="PHX-88213045",
+    email="jordan.reyes@example.com",
+    phone="555-201-3390",
+    address_line="482 Alder Street",
+    city="Rivertown",
+    state="WA",
+    postal_code="98033",
+    emergency_contact_name="Sam Reyes",
+    emergency_contact_phone="555-201-9981",
+)
+
 VISIT_TYPES: tuple[VisitType, ...] = (
     VisitType(id=VisitTypeId.IN_PERSON, label="In person", duration_minutes=30),
     VisitType(id=VisitTypeId.VIDEO, label="Video visit", duration_minutes=20),
@@ -138,6 +157,7 @@ def build_seed(now: datetime | None = None) -> StoreData:
     appointments = _build_appointments(reference, slots, future_days, past_days)
     return StoreData(
         providers=list(PROVIDERS),
+        patients=[PATIENT],
         visit_types=list(VISIT_TYPES),
         slots=sorted(slots.values(), key=lambda slot: (slot.starts_at, slot.id)),
         appointments=appointments,

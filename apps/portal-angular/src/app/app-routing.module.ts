@@ -13,6 +13,13 @@ const routes: Routes = [
     loadChildren: () =>
       import('./features/providers/providers.module').then((m) => m.ProvidersModule),
   },
+  {
+    path: 'profile',
+    loadChildren: () =>
+      import('./features/patient-profile/patient-profile.module').then(
+        (m) => m.PatientProfileModule,
+      ),
+  },
   { path: '**', redirectTo: 'appointments' },
 ];
 

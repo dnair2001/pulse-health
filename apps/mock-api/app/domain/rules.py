@@ -1,3 +1,4 @@
+import re
 from collections.abc import Iterable, Sequence
 from datetime import UTC, datetime
 
@@ -7,6 +8,8 @@ from app.domain.models import (
     AppointmentRecord,
     AppointmentScope,
     AppointmentStatus,
+    Patient,
+    PatientProfile,
     Provider,
     ProviderSummary,
     Slot,
@@ -17,6 +20,9 @@ REASON_MIN_LENGTH = 3
 REASON_MAX_LENGTH = 500
 
 _APPOINTMENT_ID_PREFIX = "apt_"
+
+_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_PHONE_PATTERN = re.compile(r"^[0-9()+\-.\s]{7,20}$")
 
 
 def now_utc() -> datetime:
@@ -241,6 +247,56 @@ def select_appointments(
     descending = scope is AppointmentScope.PAST
     selected.sort(key=lambda record: (record.starts_at, record.id), reverse=descending)
     return selected
+
+
+def the_patient(patients: Sequence[Patient]) -> Patient:
+    """Single-patient demo: with no auth, `/patients/me` always resolves to
+    the one seeded record."""
+    if not patients:
+        raise not_found("We could not find a patient profile.", "patientId")
+    return patients[0]
+
+
+def to_patient_profile(patient: Patient) -> PatientProfile:
+    return PatientProfile(
+        id=patient.id,
+        name=patient.name,
+        date_of_birth=patient.date_of_birth,
+        ssn_last4=patient.ssn[-4:],
+        email=patient.email,
+        phone=patient.phone,
+        address_line=patient.address_line,
+        city=patient.city,
+        state=patient.state,
+        postal_code=patient.postal_code,
+        emergency_contact_name=patient.emergency_contact_name,
+        emergency_contact_phone=patient.emergency_contact_phone,
+    )
+
+
+def validate_email(raw: str, field: str = "email") -> str:
+    email = raw.strip()
+    if not email or not _EMAIL_PATTERN.match(email):
+        raise validation_error("Please enter a valid email address.", field)
+    return email
+
+
+def validate_phone(raw: str, field: str) -> str:
+    phone = raw.strip()
+    if not phone or not _PHONE_PATTERN.match(phone):
+        raise validation_error("Please enter a valid phone number.", field)
+    return phone
+
+
+def validate_required_text(raw: str, field: str, label: str) -> str:
+    value = raw.strip()
+    if not value:
+        raise validation_error(f"Please enter {label}.", field)
+    return value
+
+
+def verify_identity(patient: Patient, ssn: str, date_of_birth: str) -> bool:
+    return ssn.strip() == patient.ssn and date_of_birth.strip() == patient.date_of_birth.isoformat()
 
 
 def next_appointment_id(records: Iterable[AppointmentRecord]) -> str:

@@ -230,6 +230,76 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "PatientProfile": {
+        "description": "What the profile page renders: `ssn` never leaves the server unmasked.",
+        "properties": {
+          "addressLine": {
+            "title": "Addressline",
+            "type": "string"
+          },
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "format": "date",
+            "title": "Dateofbirth",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "emergencyContactName": {
+            "title": "Emergencycontactname",
+            "type": "string"
+          },
+          "emergencyContactPhone": {
+            "title": "Emergencycontactphone",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "postalCode": {
+            "title": "Postalcode",
+            "type": "string"
+          },
+          "ssnLast4": {
+            "title": "Ssnlast4",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "dateOfBirth",
+          "ssnLast4",
+          "email",
+          "phone",
+          "addressLine",
+          "city",
+          "state",
+          "postalCode",
+          "emergencyContactName",
+          "emergencyContactPhone"
+        ],
+        "title": "PatientProfile",
+        "type": "object"
+      },
       "Provider": {
         "properties": {
           "bio": {
@@ -359,6 +429,79 @@
         "title": "Slot",
         "type": "object"
       },
+      "UpdatePatientProfileRequest": {
+        "description": "Only contact/demographic details are editable; identity fields are not.",
+        "properties": {
+          "addressLine": {
+            "examples": [
+              "482 Alder Street"
+            ],
+            "title": "Addressline",
+            "type": "string"
+          },
+          "city": {
+            "examples": [
+              "Rivertown"
+            ],
+            "title": "City",
+            "type": "string"
+          },
+          "email": {
+            "examples": [
+              "jordan.reyes@example.com"
+            ],
+            "title": "Email",
+            "type": "string"
+          },
+          "emergencyContactName": {
+            "examples": [
+              "Sam Reyes"
+            ],
+            "title": "Emergencycontactname",
+            "type": "string"
+          },
+          "emergencyContactPhone": {
+            "examples": [
+              "555-201-9981"
+            ],
+            "title": "Emergencycontactphone",
+            "type": "string"
+          },
+          "phone": {
+            "examples": [
+              "555-201-3390"
+            ],
+            "title": "Phone",
+            "type": "string"
+          },
+          "postalCode": {
+            "examples": [
+              "98033"
+            ],
+            "title": "Postalcode",
+            "type": "string"
+          },
+          "state": {
+            "examples": [
+              "WA"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "phone",
+          "addressLine",
+          "city",
+          "state",
+          "postalCode",
+          "emergencyContactName",
+          "emergencyContactPhone"
+        ],
+        "title": "UpdatePatientProfileRequest",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -397,6 +540,24 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VerifyIdentityResponse": {
+        "properties": {
+          "insuranceMemberId": {
+            "title": "Insurancememberid",
+            "type": "string"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "verified",
+          "insuranceMemberId"
+        ],
+        "title": "VerifyIdentityResponse",
         "type": "object"
       },
       "VisitType": {
@@ -757,6 +918,117 @@
         "summary": "Health",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/patients/me": {
+      "get": {
+        "operationId": "get_my_profile_api_patients_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get My Profile",
+        "tags": [
+          "patients"
+        ]
+      },
+      "patch": {
+        "operationId": "update_my_profile_api_patients_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePatientProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update My Profile",
+        "tags": [
+          "patients"
+        ]
+      }
+    },
+    "/api/patients/verify": {
+      "get": {
+        "operationId": "verify_patient_identity_api_patients_verify_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ssn",
+            "required": true,
+            "schema": {
+              "title": "Ssn",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dob",
+            "required": true,
+            "schema": {
+              "title": "Dob",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyIdentityResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Patient Identity",
+        "tags": [
+          "patients"
         ]
       }
     },

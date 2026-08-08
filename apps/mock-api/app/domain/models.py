@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from typing import Annotated
 
@@ -119,8 +119,66 @@ class Appointment(ApiModel):
     updated_at: UtcDateTime
 
 
+class Patient(ApiModel):
+    """The single patient this demo portal represents.
+
+    There is no auth, so exactly one record exists and every `/patients/me`
+    request resolves to it.
+    """
+
+    id: str
+    name: str
+    date_of_birth: date
+    ssn: str
+    insurance_member_id: str
+    email: str
+    phone: str
+    address_line: str
+    city: str
+    state: str
+    postal_code: str
+    emergency_contact_name: str
+    emergency_contact_phone: str
+
+
+class PatientProfile(ApiModel):
+    """What the profile page renders: `ssn` never leaves the server unmasked."""
+
+    id: str
+    name: str
+    date_of_birth: date
+    ssn_last4: str
+    email: str
+    phone: str
+    address_line: str
+    city: str
+    state: str
+    postal_code: str
+    emergency_contact_name: str
+    emergency_contact_phone: str
+
+
+class UpdatePatientProfileRequest(ApiModel):
+    """Only contact/demographic details are editable; identity fields are not."""
+
+    email: str = Field(examples=["jordan.reyes@example.com"])
+    phone: str = Field(examples=["555-201-3390"])
+    address_line: str = Field(examples=["482 Alder Street"])
+    city: str = Field(examples=["Rivertown"])
+    state: str = Field(examples=["WA"])
+    postal_code: str = Field(examples=["98033"])
+    emergency_contact_name: str = Field(examples=["Sam Reyes"])
+    emergency_contact_phone: str = Field(examples=["555-201-9981"])
+
+
+class VerifyIdentityResponse(ApiModel):
+    verified: bool
+    insurance_member_id: str
+
+
 class StoreData(ApiModel):
     providers: list[Provider]
+    patients: list[Patient]
     visit_types: list[VisitType]
     slots: list[Slot]
     appointments: list[AppointmentRecord]

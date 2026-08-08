@@ -42,6 +42,29 @@ is additive to this contract (added after the initial appointments-only cut) and
 included in the `provider` object embedded in an `Appointment` — see `ProviderSummary` below,
 which intentionally omits it along with `credentials`.
 
+### PatientProfile
+
+```json
+{
+  "id": "pat_001",
+  "name": "Jordan Reyes",
+  "dateOfBirth": "1985-06-12",
+  "ssnLast4": "6789",
+  "email": "jordan.reyes@example.com",
+  "phone": "555-201-3390",
+  "addressLine": "482 Alder Street",
+  "city": "Rivertown",
+  "state": "WA",
+  "postalCode": "98033",
+  "emergencyContactName": "Sam Reyes",
+  "emergencyContactPhone": "555-201-9981"
+}
+```
+
+There is no login; the portal has exactly one patient, and `/api/patients/me` always resolves
+to it. `ssnLast4` is the only part of the SSN this shape ever exposes; `name` and
+`dateOfBirth` are not editable through `PATCH /api/patients/me`.
+
 ### VisitType
 
 ```json
@@ -103,6 +126,9 @@ Every slot is 30 minutes long.
 | GET | `/api/health` | 200 | `{status, service, version, time}` |
 | GET | `/api/providers` | 200 | `Provider[]` |
 | GET | `/api/providers/{id}` | 200 | `Provider` |
+| GET | `/api/patients/me` | 200 | `PatientProfile` |
+| PATCH | `/api/patients/me` | 200 | `{email, phone, addressLine, city, state, postalCode, emergencyContactName, emergencyContactPhone}` |
+| GET | `/api/patients/verify` | 200 | query `ssn`, `dob` -> `{verified, insuranceMemberId}` |
 | GET | `/api/visit-types` | 200 | `VisitType[]` |
 | GET | `/api/slots` | 200 | `Slot[]`, see filters |
 | GET | `/api/appointments` | 200 | `Appointment[]`, see filters |
@@ -174,6 +200,7 @@ translated into this envelope.
 | `APPOINTMENT_NOT_CANCELLABLE` | 409 | cancelling an appointment whose status is `completed` or `cancelled` |
 | `APPOINTMENT_NOT_RESCHEDULABLE` | 409 | rescheduling an appointment whose status is `completed` or `cancelled` |
 | `NOT_FOUND` | 404 | unknown appointment (`field: "id"`), slot (`field: "slotId"`), provider (`field: "providerId"`), or unknown route (`field: null`) |
+| `IDENTITY_NOT_VERIFIED` | 401 | `GET /api/patients/verify` called with an `ssn`/`dob` pair that does not match the patient on file |
 
 ## Business rules
 
@@ -190,6 +217,16 @@ translated into this envelope.
    `VALIDATION_ERROR` with `field: "slotId"`.
 8. Every mutation is written to `data/store.json`, so state survives a process restart. A failed
    mutation leaves nothing behind: the slot stays free and no appointment is created.
+9. `PATCH /api/patients/me` validates every field before writing any of them: `email` must
+   look like an email address, `phone` and `emergencyContactPhone` must look like phone
+   numbers, and `addressLine`/`city`/`state`/`postalCode`/`emergencyContactName` must be
+   non-blank after trimming -> `VALIDATION_ERROR` naming the offending field. `name`,
+   `dateOfBirth` and the SSN are not part of the request body and cannot be changed this way.
+10. `GET /api/patients/verify` takes `ssn` and `dob` as query parameters (the insurance
+    eligibility partner it stands in for only supports GET) and returns
+    `{"verified": true, "insuranceMemberId": ...}` when both match the patient on file, or
+    `IDENTITY_NOT_VERIFIED` (401) otherwise. Both parameters are required; omitting either is
+    `VALIDATION_ERROR` 422.
 
 ### Validation order (matters when several rules could fire)
 
@@ -223,6 +260,7 @@ genuinely future slots.
   Dr. Marcus Bell (Dermatology, Pulse Health Riverside), `prv_003` Dr. Priya Raman
   (Pediatrics, Pulse Health Northgate), `prv_004` Samuel Okafor (Behavioral Health,
   Pulse Health Virtual Care).
+- Patient: `pat_001` Jordan Reyes, the one patient the portal is told from the perspective of.
 - Future slots: every weekday within the next 14 calendar days, 09:00 to 16:30 UTC in
   30-minute steps, for all four providers (~640 slots).
 - Past slots: every weekday within the previous 14 calendar days at 09:00, 11:00, 14:00 and

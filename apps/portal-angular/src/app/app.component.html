@@ -12,8 +12,15 @@
       <a routerLink="/providers" routerLinkActive="shell__link--active" class="shell__link">
         Providers
       </a>
+      <a routerLink="/profile" routerLinkActive="shell__link--active" class="shell__link">
+        My Profile
+      </a>
     </nav>
-    <div class="shell__patient" data-testid="patient-name">{{ patientName }}</div>
+    <a
+      routerLink="/profile"
+      class="shell__patient"
+      data-testid="patient-name"
+    >{{ patientName }}</a>
   </header>
 
   <main class="shell__main">
