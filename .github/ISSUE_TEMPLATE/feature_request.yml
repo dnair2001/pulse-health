@@ -5,9 +5,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        This repo exists to demonstrate that a legacy Angular app and its React port behave
-        identically against one frozen contract. Proposals that make the two diverge, or that
-        modernize `apps/portal-angular`, work against that purpose — see AGENTS.md.
+        This repo exists to demonstrate a legacy Angular app being modernized. Proposals that
+        modernize `apps/portal-angular` itself work against that purpose — see AGENTS.md.
 
   - type: textarea
     id: problem
@@ -31,7 +30,6 @@ body:
       options:
         - label: apps/mock-api
         - label: apps/portal-angular
-        - label: apps/portal-react
         - label: Tooling / CI / docs
 
   - type: dropdown
@@ -43,13 +41,3 @@ body:
         - 'Yes — and I have explained below why the frontend cannot be reconsidered instead'
     validations:
       required: true
-
-  - type: textarea
-    id: parity
-    attributes:
-      label: Parity plan
-      description: |
-        If this changes user-visible text or date rendering, how will both frontends be kept
-        byte-identical?
-    validations:
-      required: false

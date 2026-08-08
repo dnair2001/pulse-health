@@ -140,68 +140,6 @@ jobs:
         working-directory: apps/portal-angular
         run: npm run build
 
-  react-static:
-    name: portal-react (oxlint + tsc + build)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: apps/portal-react/package-lock.json
-
-      - name: Install dependencies
-        working-directory: apps/portal-react
-        run: npm ci
-
-      - name: Lint
-        working-directory: apps/portal-react
-        run: npm run lint
-
-      # oxlint above already enforces complexity/max-depth/max-lines-per-function (see
-      # .oxlintrc.json); this covers the dead-code/unused-dependency leg of the budget.
-      - name: Dead-code check (knip)
-        working-directory: apps/portal-react
-        run: npm run lint:deadcode
-
-      - name: Typecheck
-        working-directory: apps/portal-react
-        run: npm run typecheck
-
-      - name: Build
-        working-directory: apps/portal-react
-        run: npm run build
-
-  react-tests:
-    name: portal-react vitest (TZ=${{ matrix.tz }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        # Invariant 4 in AGENTS.md: React's date formatting was hand-ported to match
-        # Angular's, and non-UTC timezones have exposed real bugs that UTC hid.
-        tz: [UTC, America/New_York]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: apps/portal-react/package-lock.json
-
-      - name: Install dependencies
-        working-directory: apps/portal-react
-        run: npm ci
-
-      - name: Test
-        working-directory: apps/portal-react
-        env:
-          TZ: ${{ matrix.tz }}
-        run: npm run test:coverage
-
   quality:
     name: quality (duplicate-code budget)
     runs-on: ubuntu-latest
@@ -266,7 +204,6 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             apps/portal-angular/package-lock.json
-            apps/portal-react/package-lock.json
 
       - name: Install Chrome
         id: chrome
@@ -280,7 +217,6 @@ jobs:
           PUPPETEER_SKIP_DOWNLOAD: 'true'
         run: |
           npm ci --prefix apps/portal-angular
-          npm ci --prefix apps/portal-react
 
       - name: Check documented test counts are current
         env:
@@ -290,7 +226,7 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: [format, api, angular, react-static, react-tests, quality, observability, docs-freshness]
+    needs: [format, api, angular, quality, observability, docs-freshness]
     if: always()
     steps:
       - name: Check job results

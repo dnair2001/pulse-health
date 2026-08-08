@@ -1,18 +1,18 @@
 # Pulse Health
 
-Patient portal for a fictional digital healthcare company, used to show a legacy frontend being
-modernised. One patient-facing feature, Appointment Scheduling, is complete end to end in **two
-frontends** against **one backend**:
+Patient portal for a fictional digital healthcare company, used to show a legacy Angular
+frontend being modernised. One patient-facing feature, Appointment Scheduling, is complete end
+to end:
 
 | App | What it is |
 | --- | --- |
 | `apps/portal-angular` | the legacy baseline: Angular 17 NgModules, RxJS, Karma |
-| `apps/portal-react` | the migration target: React 19, Vite, TanStack Query, Vitest |
-| `apps/mock-api` | FastAPI mock, shared by both, unchanged by the migration |
+| `apps/mock-api` | FastAPI mock backing it |
 
-The REST contract in [`docs/api-contract.md`](docs/api-contract.md) is frozen, which is what let
-the React port land without a single backend change. Both frontends render the same markup, reuse
-the same stylesheet and keep the same `data-testid` values, so their output is byte-identical.
+The REST contract in [`docs/api-contract.md`](docs/api-contract.md) is frozen — it is written so
+that a future migration to another frontend framework requires no backend change. `data-testid`
+attributes are already in place on the elements a UI test would target, so behavioural tests can
+be ported alongside the components when that migration happens.
 
 ## Stack
 
@@ -35,11 +35,11 @@ pulse-health/
 ├── AGENTS.md                    invariants and conventions for agents and newcomers
 ├── docs/api-contract.md         frozen REST contract
 ├── docs/privacy.md              what happens to data in this demo (no real PHI)
-├── .jscpd.json                  duplicate-code budget across all three apps
-├── .github/workflows/           CI per app, CodeQL, Droid auto-review, secret scan, flaky-test detection
+├── .jscpd.json                  duplicate-code budget across both apps
+├── .github/workflows/           CI per app, CodeQL, secret scan, flaky-test detection
 ├── .devcontainer/               Node 22 + Python 3.12, runs npm run setup on create
-├── .pre-commit-config.yaml      ruff, mypy, vulture, oxlint, eslint, knip, jscpd, prettier, hygiene hooks
-├── e2e/                         Playwright specs driving both frontends on one port
+├── .pre-commit-config.yaml      ruff, mypy, vulture, eslint, knip, jscpd, prettier, hygiene hooks
+├── e2e/                         Playwright specs driving the frontend on one port
 ├── apps/
 │   ├── portal-angular/          Angular 17 patient portal
 │   │   ├── karma.conf.js        headless Chrome, resolved from the puppeteer cache
@@ -52,23 +52,13 @@ pulse-health/
 │   │           ├── services/    appointments, providers, slots (HttpClient)
 │   │           ├── pages/       list, schedule, reschedule
 │   │           └── components/  appointment card, filters, slot picker
-│   ├── portal-react/            React 19 port of the same feature
-│   │   ├── vite.config.ts       /api -> localhost:8000, dev server on :4300
-│   │   └── src/
-│   │       ├── api/             typed client, endpoints, query hooks, error normalisation
-│   │       ├── shared/          the same five primitives, date helpers, visit-type label
-│   │       ├── notifications/   notification provider
-│   │       └── features/appointments/
-│   │           ├── AppointmentsRoutes.tsx + appointmentSchema.ts
-│   │           ├── pages/       list, schedule, reschedule
-│   │           └── components/  appointment card, filters, slot picker
 │   └── mock-api/                FastAPI mock
 │       ├── app/domain/          models, rules, error envelope
 │       ├── app/api/             health, providers, visit types, slots, appointments, dev
 │       ├── app/observability/   JSON logs, Prometheus /metrics, OpenTelemetry traces
 │       ├── prometheus/alerts.yml  alerting rules for the metrics above (validated, not wired up)
 │       ├── app/store.py         atomic file-backed persistence
-│       ├── demo_server.py       both built frontends + the API on one port
+│       ├── demo_server.py       the built frontend + the API on one port
 │       └── data/store.json      runtime state (gitignored, reseeds when missing)
 ```
 
@@ -96,45 +86,36 @@ npm run setup   # backend venv + Angular dependencies
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | all three: API on :8000, Angular on :4200, React on :4300 |
+| `npm start` | both: API on :8000, Angular on :4200 |
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
 | `npm run start:angular` | `ng serve`, http://localhost:4200 |
-| `npm run start:react` | `vite`, http://localhost:4300 |
-| `npm test` | all three unit suites (133 + 64 + 86 = 283 tests) |
-| `npm run test:api` / `test:angular` / `test:react` | one suite only |
-| `npm run test:e2e` | 25 Playwright specs driving both frontends in a real browser |
-| `npm run lint` | ruff, then eslint, then oxlint |
-| `npm run typecheck` | mypy (strict), then Angular tsc, then React tsc |
+| `npm test` | both unit suites (133 + 64 = 197 tests) |
+| `npm run test:api` / `test:angular` | one suite only |
+| `npm run test:e2e` | Playwright specs driving the frontend in a real browser |
+| `npm run lint` | ruff, then eslint |
+| `npm run typecheck` | mypy (strict), then Angular tsc |
 | `npm run format` | Prettier over TS/JS/JSON/YAML |
-| `npm run build` | production bundles for both frontends |
-| `npm run demo` | build both frontends and serve them with the API on one port |
+| `npm run build` | production bundle |
+| `npm run demo` | build the frontend and serve it with the API on one port |
 | `npm run reset:data` | reseed the API store while it is running |
 
-Both dev servers proxy `/api` to the API, so the browser sees one origin and CORS does not apply
+The dev server proxies `/api` to the API, so the browser sees one origin and CORS does not apply
 in development.
 
-### Viewing both apps from another machine
+### Viewing the app from another machine
 
 When the repo runs on a remote host or container and you browse from your own machine, use:
 
 ```bash
 npm run start:api    # in one shell, if it is not already running
-npm run demo         # in another: builds both bundles, serves on :8080
+npm run demo         # in another: builds the bundle, serves on :8080
 ```
 
-Forward the single port (`8080`) and open:
+Forward the single port (`8080`) and open http://localhost:8080/appointments.
 
-| URL | App |
-| --- | --- |
-| http://localhost:8080/appointments | Angular |
-| http://localhost:8080/react/appointments | React |
-
-One port means one tunnel, and both apps share the same API and store, so a booking made in one
-shows up in the other on refresh.
-
-Prefer this over forwarding the dev servers. Live reload holds a websocket open for the lifetime
+Prefer this over forwarding the dev server. Live reload holds a websocket open for the lifetime
 of the page and some tunnels handle that badly: the first page load succeeds and every request
-after it hangs. `npm run demo` serves compiled bundles over plain HTTP, so every connection is
+after it hangs. `npm run demo` serves a compiled bundle over plain HTTP, so every connection is
 short-lived. It also has no file watcher, so rerun `npm run demo:build` after changing code.
 
 ## Demo script
@@ -209,12 +190,6 @@ npm test
   log line's shape, the log scrubber's allowlist, and POST /api/telemetry's validation and
   logging/metrics fan-out, and two tests that pin the `/api` payload and error-envelope shapes so
   the frozen contract cannot drift.
-- **React, 86 tests.** The same ground as the Angular suite in the React idiom: the client's error
-  normalisation and query-string building (plus the `X-Request-Id` header, the query retry
-  predicate, and reporting failures to `/api/telemetry` bounded to `error.name`, never the raw
-  exception message), query-key isolation and cache invalidation, the shared primitives and date
-  helpers, the three components, and the three pages including the orderings that keep a page
-  banner and a field-level server error from disagreeing. Green under any `TZ`.
 - **Angular, 64 tests.** Service URLs and query params, the error interceptor's normalisation
   including network failure, the `X-Request-Id` header it stamps, and reporting failures to
   `/api/telemetry` bounded to `error.name`, the global `ErrorHandler`, the `ControlValueAccessor`
@@ -227,11 +202,8 @@ npm test
 npm run test:e2e
 ```
 
-- **End to end, 25 specs.** Every user flow runs twice, once per implementation, against one live
-  API on one port. Five of them load the Angular page and the React page and diff their rendered
-  text, which is the only mechanical enforcement of the claim that the two frontends are
-  interchangeable. Non-ASCII characters are escaped in the failure output so an en-dash-versus-hyphen
-  regression cannot slip through as a visually identical diff.
+- **End to end, 10 specs.** Every user flow against one live API on one port: listing, filtering,
+  cancelling, scheduling, form validation, and the server-authoritative double-booking rejection.
 
 ## Notes for the migration phase
 

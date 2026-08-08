@@ -16,14 +16,12 @@ package-lock.json
 apps/mock-api/openapi.json
 
 # HTML is never formatted. Prettier's whitespace handling in Angular templates can
-# change the text the browser renders, and invariant 3 (both frontends render
-# byte-identical user-visible text) is verified against rendered output.
+# change the text the browser renders, and rendered user-visible text is verified
+# against the e2e suite's expectations.
 *.html
 
-# Stylesheets are never formatted. apps/portal-react/src/styles/global.scss is a
-# verbatim copy: its first 413 lines are apps/portal-angular/src/styles.scss and its
-# last 68 are apps/portal-angular/src/app/app.component.scss. Byte-equality of those
-# three files is an invariant, so no formatter may touch any stylesheet.
+# Stylesheets are never formatted, to keep diffs limited to actual style changes rather
+# than reflow noise.
 *.scss
 *.css
 

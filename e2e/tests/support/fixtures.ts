@@ -4,20 +4,18 @@ import { Api } from './api';
 
 export interface Implementation {
   /** Shows up in test titles. */
-  name: 'angular' | 'react';
+  name: 'angular';
   /** Prefix the demo server mounts the bundle under. */
-  basePath: '' | '/react';
+  basePath: '';
 }
 
 /**
- * Every user-flow spec is parameterised over this list, so a flow that only works in one
- * frontend fails rather than passing quietly. Angular is the reference implementation
- * (AGENTS.md invariant 5), so it is listed first and its failures read first.
+ * Every user-flow spec is parameterised over this list. It holds one entry today (Angular is
+ * the only frontend, see AGENTS.md); the loop stays in place so a second implementation — the
+ * eventual React port — can be added back by extending this array rather than rewriting every
+ * spec.
  */
-export const IMPLEMENTATIONS: readonly Implementation[] = [
-  { name: 'angular', basePath: '' },
-  { name: 'react', basePath: '/react' },
-];
+export const IMPLEMENTATIONS: readonly Implementation[] = [{ name: 'angular', basePath: '' }];
 
 interface Fixtures {
   api: Api;
