@@ -213,6 +213,52 @@ class Prescription(ApiModel):
     updated_at: UtcDateTime
 
 
+class InvoiceStatus(StrEnum):
+    OPEN = "open"
+    PAID = "paid"
+
+
+class InvoiceRecord(ApiModel):
+    """What is persisted.
+
+    `patientResponsibilityCents` and `balanceCents` on `Invoice` below are
+    derived rather than stored, so a stale write can never disagree with the
+    figures they are computed from.
+    """
+
+    id: str
+    provider_id: str
+    service_description: str
+    billed_amount_cents: int
+    insurance_paid_cents: int
+    amount_paid_cents: int
+    status: InvoiceStatus
+    due_date: date
+    issued_at: UtcDateTime
+    updated_at: UtcDateTime
+
+
+class Invoice(ApiModel):
+    id: str
+    provider_id: str
+    provider: ProviderSummary
+    service_description: str
+    billed_amount_cents: int
+    insurance_paid_cents: int
+    patient_responsibility_cents: int
+    amount_paid_cents: int
+    balance_cents: int
+    status: InvoiceStatus
+    overdue: bool
+    due_date: date
+    issued_at: UtcDateTime
+    updated_at: UtcDateTime
+
+
+class RecordPaymentRequest(ApiModel):
+    amount_cents: int = Field(examples=[8400])
+
+
 class StoreData(ApiModel):
     providers: list[Provider]
     patients: list[Patient]
@@ -220,6 +266,7 @@ class StoreData(ApiModel):
     slots: list[Slot]
     appointments: list[AppointmentRecord]
     prescriptions: list[PrescriptionRecord]
+    invoices: list[InvoiceRecord]
 
 
 class CreateAppointmentRequest(ApiModel):

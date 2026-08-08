@@ -93,6 +93,41 @@ to it. `ssnLast4` is the only part of the SSN this shape ever exposes; `name` an
 - The embedded `provider` is the same projection used on `Appointment` (no `credentials`).
 - `refillsRemaining` only changes through `POST /api/prescriptions/{id}/refill-request`.
 
+### Invoice
+
+```json
+{
+  "id": "inv_001",
+  "providerId": "prv_001",
+  "provider": {
+    "id": "prv_001",
+    "name": "Dr. Alice Nguyen",
+    "specialty": "Primary Care",
+    "locationName": "Pulse Health Downtown"
+  },
+  "serviceDescription": "Annual physical",
+  "billedAmountCents": 42000,
+  "insurancePaidCents": 33600,
+  "patientResponsibilityCents": 8400,
+  "amountPaidCents": 0,
+  "balanceCents": 8400,
+  "status": "open",
+  "overdue": false,
+  "dueDate": "2026-08-20",
+  "issuedAt": "2026-07-25T00:00:00Z",
+  "updatedAt": "2026-07-25T00:00:00Z"
+}
+```
+
+- `status` is exactly one of `open`, `paid`.
+- `patientResponsibilityCents` (`billedAmountCents - insurancePaidCents`) and `balanceCents`
+  (`patientResponsibilityCents - amountPaidCents`) are computed on every read, never stored, so
+  they can never disagree with the figures they are derived from.
+- `overdue` is `true` only when `status == "open"` **and** `dueDate` is in the past.
+- The embedded `provider` is the same projection used on `Appointment`/`Prescription`.
+- `amountPaidCents` and `status` only change through
+  `POST /api/billing/invoices/{id}/payments`.
+
 ### VisitType
 
 ```json
@@ -160,6 +195,9 @@ Every slot is 30 minutes long.
 | GET | `/api/prescriptions` | 200 | `Prescription[]`, optional `?status=` |
 | GET | `/api/prescriptions/{id}` | 200 | `Prescription` |
 | POST | `/api/prescriptions/{id}/refill-request` | 200 | no body |
+| GET | `/api/billing/invoices` | 200 | `Invoice[]`, optional `?status=` |
+| GET | `/api/billing/invoices/{id}` | 200 | `Invoice` |
+| POST | `/api/billing/invoices/{id}/payments` | 200 | `{amountCents}` |
 | GET | `/api/visit-types` | 200 | `VisitType[]` |
 | GET | `/api/slots` | 200 | `Slot[]`, see filters |
 | GET | `/api/appointments` | 200 | `Appointment[]`, see filters |
@@ -234,6 +272,8 @@ translated into this envelope.
 | `IDENTITY_NOT_VERIFIED` | 401 | `GET /api/patients/verify` called with an `ssn`/`dob` pair that does not match the patient on file |
 | `PRESCRIPTION_NOT_REFILLABLE` | 409 | refill requested for a prescription whose status is not `active` |
 | `NO_REFILLS_REMAINING` | 409 | refill requested for an `active` prescription with `refillsRemaining == 0` |
+| `INVOICE_ALREADY_PAID` | 409 | a payment is recorded against an invoice whose status is already `paid` |
+| `PAYMENT_EXCEEDS_BALANCE` | 422 | `amountCents` is greater than the invoice's current `balanceCents` |
 
 ## Business rules
 
@@ -266,6 +306,14 @@ translated into this envelope.
     not-refillable check runs first.
 12. `GET /api/prescriptions?status=` filters to that status; an unknown value is
     `VALIDATION_ERROR` with `field: "status"` (never a silent empty list).
+13. `POST /api/billing/invoices/{id}/payments` requires `amountCents > 0` -> `VALIDATION_ERROR`
+    with `field: "amountCents"`. It is rejected with `INVOICE_ALREADY_PAID` when the invoice's
+    status is already `paid`, or `PAYMENT_EXCEEDS_BALANCE` when `amountCents` is more than the
+    invoice's current `balanceCents`; the already-paid check runs first. A payment that exactly
+    clears the balance sets `status: "paid"`; a smaller payment leaves it `open` with a reduced
+    `balanceCents`.
+14. `GET /api/billing/invoices?status=` filters to that status; an unknown value is
+    `VALIDATION_ERROR` with `field: "status"`.
 
 ### Validation order (matters when several rules could fire)
 
@@ -303,6 +351,10 @@ genuinely future slots.
 - Prescriptions: `rx_001`-`rx_005`, one per provider plus a second for `prv_001`. `rx_002`
   (Metformin) is seeded with `refillsRemaining: 0` and `rx_004` (Amoxicillin) is seeded
   `completed`, so both refill error codes are reachable without any mutation first.
+- Invoices: `inv_001`-`inv_005`, one per provider plus a second for `prv_001`. `inv_002`
+  (Dermatology follow-up) is seeded fully `paid`; `inv_003` (Newborn wellness visit) is
+  seeded `open` with a `dueDate` in the past, so it is reachable as `overdue: true` without
+  any mutation first; the rest are `open` and not yet due.
 - Future slots: every weekday within the next 14 calendar days, 09:00 to 16:30 UTC in
   30-minute steps, for all four providers (~640 slots).
 - Past slots: every weekday within the previous 14 calendar days at 09:00, 11:00, 14:00 and

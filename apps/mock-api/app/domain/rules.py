@@ -1,6 +1,6 @@
 import re
 from collections.abc import Iterable, Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from app.domain.errors import ApiError, ErrorCode, not_found, validation_error
 from app.domain.models import (
@@ -8,6 +8,9 @@ from app.domain.models import (
     AppointmentRecord,
     AppointmentScope,
     AppointmentStatus,
+    Invoice,
+    InvoiceRecord,
+    InvoiceStatus,
     Patient,
     PatientProfile,
     Prescription,
@@ -111,6 +114,19 @@ def parse_prescription_status(raw: str | None, field: str = "status") -> Prescri
         raise validation_error(
             f"'{raw}' is not a valid prescription status. Choose one of: "
             f"{_join(s.value for s in PrescriptionStatus)}.",
+            field,
+        ) from None
+
+
+def parse_invoice_status(raw: str | None, field: str = "status") -> InvoiceStatus | None:
+    if raw is None:
+        return None
+    try:
+        return InvoiceStatus(raw)
+    except ValueError:
+        raise validation_error(
+            f"'{raw}' is not a valid invoice status. Choose one of: "
+            f"{_join(s.value for s in InvoiceStatus)}.",
             field,
         ) from None
 
@@ -362,3 +378,52 @@ def ensure_refillable(record: PrescriptionRecord) -> None:
             ErrorCode.NO_REFILLS_REMAINING,
             "There are no refills remaining. Please contact your provider.",
         )
+
+
+def require_invoice(records: Sequence[InvoiceRecord], invoice_id: str) -> InvoiceRecord:
+    for record in records:
+        if record.id == invoice_id:
+            return record
+    raise not_found("We could not find that invoice.", "id")
+
+
+def to_invoice(record: InvoiceRecord, provider: Provider, today: date) -> Invoice:
+    patient_responsibility_cents = record.billed_amount_cents - record.insurance_paid_cents
+    balance_cents = patient_responsibility_cents - record.amount_paid_cents
+    return Invoice(
+        id=record.id,
+        provider_id=record.provider_id,
+        provider=to_summary(provider),
+        service_description=record.service_description,
+        billed_amount_cents=record.billed_amount_cents,
+        insurance_paid_cents=record.insurance_paid_cents,
+        patient_responsibility_cents=patient_responsibility_cents,
+        amount_paid_cents=record.amount_paid_cents,
+        balance_cents=balance_cents,
+        status=record.status,
+        overdue=record.status is InvoiceStatus.OPEN and record.due_date < today,
+        due_date=record.due_date,
+        issued_at=record.issued_at,
+        updated_at=record.updated_at,
+    )
+
+
+def validate_payment_amount(record: InvoiceRecord, amount_cents: int) -> int:
+    if record.status is InvoiceStatus.PAID:
+        raise ApiError(
+            ErrorCode.INVOICE_ALREADY_PAID,
+            "This invoice has already been paid in full.",
+        )
+    if amount_cents <= 0:
+        raise validation_error("Enter a payment amount greater than zero.", "amountCents")
+
+    balance_cents = (
+        record.billed_amount_cents - record.insurance_paid_cents - record.amount_paid_cents
+    )
+    if amount_cents > balance_cents:
+        raise ApiError(
+            ErrorCode.PAYMENT_EXCEEDS_BALANCE,
+            f"That is more than the ${balance_cents / 100:.2f} balance on this invoice.",
+            "amountCents",
+        )
+    return balance_cents

@@ -9,6 +9,8 @@ from datetime import UTC, date, datetime, time, timedelta
 from app.domain.models import (
     AppointmentRecord,
     AppointmentStatus,
+    InvoiceRecord,
+    InvoiceStatus,
     Patient,
     PrescriptionRecord,
     PrescriptionStatus,
@@ -135,6 +137,26 @@ _INSTRUCTIONS = {
     "Sertraline": "Take at the same time each day. May take several weeks to feel the full effect.",
 }
 
+INVOICE_PLAN: tuple[tuple[str, str, str, int, int, int, InvoiceStatus, int, int], ...] = (
+    # (id suffix, provider, description, billed cents, insurance-paid cents,
+    #  patient-paid cents, status, due in N days from today, issued N days ago)
+    ("001", "prv_001", "Annual physical", 42000, 33600, 0, InvoiceStatus.OPEN, 20, 10),
+    ("002", "prv_002", "Dermatology follow-up", 18000, 14400, 3600, InvoiceStatus.PAID, -5, 20),
+    (
+        "003",
+        "prv_003",
+        "Newborn wellness visit",
+        25000,
+        20000,
+        0,
+        InvoiceStatus.OPEN,
+        -10,
+        40,
+    ),
+    ("004", "prv_004", "Therapy session", 15000, 12000, 1000, InvoiceStatus.OPEN, 5, 15),
+    ("005", "prv_001", "Persistent cough visit", 22000, 17600, 0, InvoiceStatus.OPEN, 15, 5),
+)
+
 VISIT_TYPES: tuple[VisitType, ...] = (
     VisitType(id=VisitTypeId.IN_PERSON, label="In person", duration_minutes=30),
     VisitType(id=VisitTypeId.VIDEO, label="Video visit", duration_minutes=20),
@@ -201,7 +223,40 @@ def build_seed(now: datetime | None = None) -> StoreData:
         slots=sorted(slots.values(), key=lambda slot: (slot.starts_at, slot.id)),
         appointments=appointments,
         prescriptions=_build_prescriptions(reference),
+        invoices=_build_invoices(reference),
     )
+
+
+def _build_invoices(reference: datetime) -> list[InvoiceRecord]:
+    today = reference.date()
+    records: list[InvoiceRecord] = []
+    for (
+        suffix,
+        provider_id,
+        description,
+        billed_cents,
+        insurance_paid_cents,
+        amount_paid_cents,
+        status,
+        due_in_days,
+        issued_days_ago,
+    ) in INVOICE_PLAN:
+        issued_at = reference - timedelta(days=issued_days_ago)
+        records.append(
+            InvoiceRecord(
+                id=f"inv_{suffix}",
+                provider_id=provider_id,
+                service_description=description,
+                billed_amount_cents=billed_cents,
+                insurance_paid_cents=insurance_paid_cents,
+                amount_paid_cents=amount_paid_cents,
+                status=status,
+                due_date=today + timedelta(days=due_in_days),
+                issued_at=issued_at,
+                updated_at=issued_at,
+            )
+        )
+    return records
 
 
 def _build_prescriptions(reference: datetime) -> list[PrescriptionRecord]:

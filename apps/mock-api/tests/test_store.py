@@ -19,6 +19,7 @@ def test_store_writes_a_seed_file_on_first_use(store: Store) -> None:
         "slots",
         "appointments",
         "prescriptions",
+        "invoices",
     }
     assert payload["providers"][0]["locationName"] == "Pulse Health Downtown"
 

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.appointments import router as appointments_router
+from app.api.billing import router as billing_router
 from app.api.dev import router as dev_router
 from app.api.health import router as health_router
 from app.api.patients import router as patients_router
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
     app.include_router(providers_router, prefix="/api")
     app.include_router(patients_router, prefix="/api")
     app.include_router(prescriptions_router, prefix="/api")
+    app.include_router(billing_router, prefix="/api")
     app.include_router(visit_types_router, prefix="/api")
     app.include_router(slots_router, prefix="/api")
     app.include_router(appointments_router, prefix="/api")
