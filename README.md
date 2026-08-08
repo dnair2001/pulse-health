@@ -1,8 +1,9 @@
 # Pulse Health
 
 Patient portal for a fictional digital healthcare company, used to show a legacy Angular
-frontend being modernised. One patient-facing feature, Appointment Scheduling, is complete end
-to end:
+frontend being modernised. A dashboard plus five patient-facing features are complete end to
+end: Appointment Scheduling, Provider Directory, Patient Profile & Demographics, Prescriptions &
+Medications, and Billing & Insurance Claims.
 
 | App | What it is |
 | --- | --- |
@@ -47,14 +48,17 @@ pulse-health/
 │   │   └── src/app/
 │   │       ├── core/            models, HTTP error interceptor, notification service
 │   │       ├── shared/          badge, spinner, empty state, alert, confirm dialog, pipe, validator
-│   │       └── features/appointments/
-│   │           ├── appointments.module.ts + appointments-routing.module.ts
-│   │           ├── services/    appointments, providers, slots (HttpClient)
-│   │           ├── pages/       list, schedule, reschedule
-│   │           └── components/  appointment card, filters, slot picker
+│   │       └── features/
+│   │           ├── dashboard/       landing page summarising the other five features
+│   │           ├── appointments/    scheduling, rescheduling, cancelling
+│   │           ├── providers/       provider directory + profile pages
+│   │           ├── patient-profile/ demographics, contact-info edit, identity verification
+│   │           ├── prescriptions/   list, filter, refill request
+│   │           └── billing/         invoices, payments
 │   └── mock-api/                FastAPI mock
 │       ├── app/domain/          models, rules, error envelope
-│       ├── app/api/             health, providers, visit types, slots, appointments, dev
+│       ├── app/api/             health, providers, patients, visit types, slots, appointments,
+│       │                        prescriptions, billing, dev
 │       ├── app/observability/   JSON logs, Prometheus /metrics, OpenTelemetry traces
 │       ├── prometheus/alerts.yml  alerting rules for the metrics above (validated, not wired up)
 │       ├── app/store.py         atomic file-backed persistence
@@ -89,7 +93,7 @@ npm run setup   # backend venv + Angular dependencies
 | `npm start` | both: API on :8000, Angular on :4200 |
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
 | `npm run start:angular` | `ng serve`, http://localhost:4200 |
-| `npm test` | both unit suites (133 + 64 = 197 tests) |
+| `npm test` | both unit suites (170 + 106 = 276 tests) |
 | `npm run test:api` / `test:angular` | one suite only |
 | `npm run test:e2e` | Playwright specs driving the frontend in a real browser |
 | `npm run lint` | ruff, then eslint |
@@ -111,7 +115,7 @@ npm run start:api    # in one shell, if it is not already running
 npm run demo         # in another: builds the bundle, serves on :8080
 ```
 
-Forward the single port (`8080`) and open http://localhost:8080/appointments.
+Forward the single port (`8080`) and open http://localhost:8080/.
 
 Prefer this over forwarding the dev server. Live reload holds a websocket open for the lifetime
 of the page and some tunnels handle that badly: the first page load succeeds and every request
@@ -124,7 +128,11 @@ short-lived. It also has no file watcher, so rerun `npm run demo:build` after ch
 npm start
 ```
 
-Then open http://localhost:4200, which redirects to `/appointments`.
+Then open http://localhost:4200, which lands on the Dashboard: a summary of the next
+appointment, active prescriptions, the outstanding billing balance, and quick links into each
+feature below.
+
+### Appointments
 
 1. **Upcoming and past.** The Upcoming tab lists three seeded appointments. Switch to Past for a
    completed and a cancelled visit. Note that completed visits show *"Completed visits cannot be
@@ -165,9 +173,46 @@ Then open http://localhost:4200, which redirects to `/appointments`.
 12. **Back to a clean slate.** `npm run reset:data` reseeds providers, slots and appointments
     relative to the current time.
 
+### Provider Directory
+
+1. **Browse and search.** `/providers` lists all four providers; the search box filters by name
+   or specialty client-side.
+2. **Profile.** Click a provider to see their full bio alongside their credentials and location.
+   An unknown id in the URL shows a not-found error instead of a blank page.
+
+### Patient Profile & Demographics
+
+1. **Demographics on file.** `/profile` shows the one seeded patient's contact and emergency
+   information. The SSN is shown as its last four digits only; the full value never leaves the
+   API in this view.
+2. **Editing.** *Edit* switches the read view to a reactive form. Name, date of birth, and SSN
+   are not editable — only contact and emergency-contact fields are. Server-side validation
+   errors (bad email/phone format, blank required fields) map onto the specific field.
+3. **Identity verification.** The insurance-card widget asks for the SSN and date of birth again
+   and calls a separate verification endpoint; a mismatch is rejected without exposing why.
+
+### Prescriptions & Medications
+
+1. **Active and completed.** `/prescriptions` tabs between All, Active and Completed. Each card
+   shows dosage, frequency and instructions.
+2. **Refills.** *Request refill* is disabled with an inline reason once a prescription is
+   completed, cancelled, or has no refills left; otherwise it decrements the remaining count.
+
+### Billing & Insurance Claims
+
+1. **What insurance covered.** `/billing` tabs between All, Open and Paid. Each invoice shows
+   what was billed, what insurance paid, and the resulting patient responsibility and balance,
+   computed on every read rather than stored.
+2. **Overdue.** An open invoice past its due date carries an *overdue* badge.
+3. **Paying a balance.** *Pay balance* opens an inline form pre-filled with the remaining
+   balance. A payment that exactly clears it marks the invoice paid; a partial payment reduces
+   the balance and leaves it open. Overpaying is rejected with the current balance quoted back.
+
 ## Business rules
 
-Enforced in the API and surfaced in the UI:
+Enforced in the API and surfaced in the UI. The appointment rules below were the first written;
+the full set for every feature, including Provider Directory, Patient Profile, Prescriptions and
+Billing, is enumerated in [`docs/api-contract.md`](docs/api-contract.md#business-rules).
 
 | Rule | Where | Failure surfaced as |
 | --- | --- | --- |
@@ -184,26 +229,29 @@ Enforced in the API and surfaced in the UI:
 npm test
 ```
 
-- **API, 133 tests.** Every rule and error code, filter and ordering behaviour, the error envelope
+- **API, 170 tests.** Every rule and error code, filter and ordering behaviour, the error envelope
   shape for malformed bodies, slot freeing on cancel and swapping on reschedule, and persistence
-  across a store reload. Plus observability: correlation ids, metric label cardinality, the JSON
-  log line's shape, the log scrubber's allowlist, and POST /api/telemetry's validation and
+  across a store reload, across all five domains (appointments, providers, patients,
+  prescriptions, billing). Plus observability: correlation ids, metric label cardinality, the
+  JSON log line's shape, the log scrubber's allowlist, and POST /api/telemetry's validation and
   logging/metrics fan-out, and two tests that pin the `/api` payload and error-envelope shapes so
   the frozen contract cannot drift.
-- **Angular, 64 tests.** Service URLs and query params, the error interceptor's normalisation
+- **Angular, 106 tests.** Service URLs and query params, the error interceptor's normalisation
   including network failure, the `X-Request-Id` header it stamps, and reporting failures to
   `/api/telemetry` bounded to `error.name`, the global `ErrorHandler`, the `ControlValueAccessor`
-  slot picker, reactive form validation, the pipe and validator, plus component tests for the list
-  page (loading, empty, filtered empty, error with retry, cancel confirmation accepted and
-  dismissed, cancel rejection) and the schedule page (validation, submission, server error
-  mapping, availability refresh).
+  slot picker, reactive form validation, the pipe and validator, plus component tests for every
+  feature page: appointments (list, schedule, reschedule), the provider directory and profile,
+  patient profile (edit, identity verification), prescriptions (tabs, refill), billing (tabs,
+  payment), and the dashboard's cross-feature summary.
 
 ```bash
 npm run test:e2e
 ```
 
-- **End to end, 10 specs.** Every user flow against one live API on one port: listing, filtering,
-  cancelling, scheduling, form validation, and the server-authoritative double-booking rejection.
+- **End to end, 27 specs.** Every user flow against one live API on one port, across all five
+  features plus the dashboard: listing, filtering, cancelling, scheduling, form validation, the
+  server-authoritative double-booking rejection, provider search and profiles, patient
+  demographics and identity verification, prescription refills, and invoice payments.
 
 ## Notes for the migration phase
 

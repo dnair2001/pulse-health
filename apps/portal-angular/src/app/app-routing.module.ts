@@ -2,7 +2,12 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
-  { path: '', redirectTo: 'appointments', pathMatch: 'full' },
+  {
+    path: '',
+    pathMatch: 'full',
+    loadChildren: () =>
+      import('./features/dashboard/dashboard.module').then((m) => m.DashboardModule),
+  },
   {
     path: 'appointments',
     loadChildren: () =>
@@ -29,7 +34,7 @@ const routes: Routes = [
     path: 'billing',
     loadChildren: () => import('./features/billing/billing.module').then((m) => m.BillingModule),
   },
-  { path: '**', redirectTo: 'appointments' },
+  { path: '**', redirectTo: '' },
 ];
 
 @NgModule({

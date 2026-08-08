@@ -12,7 +12,7 @@ Definition of done (see [AGENTS.md](../AGENTS.md)):
 
 - [ ] `npm run lint` passes
 - [ ] `npm run typecheck` and `npm run format:check` pass
-- [ ] `npm test` passes (133 pytest + 64 Karma = 197)
+- [ ] `npm test` passes (170 pytest + 106 Karma = 276)
 - [ ] `npm run build` passes
 - [ ] `npm run check:duplication` and `npm run check:doc-freshness` pass
 
@@ -30,6 +30,6 @@ Invariants:
 
 <!--
 For changes to user-visible strings or date rendering, tests are not sufficient. Run
-`npm run demo` and check the rendered text of /appointments yourself, or run `npm run test:e2e`.
-Paste what you did and what you saw.
+`npm run demo` and check the rendered text of the affected page yourself, or run
+`npm run test:e2e`. Paste what you did and what you saw.
 -->

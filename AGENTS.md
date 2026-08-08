@@ -1,8 +1,10 @@
 # Pulse Health
 
 A patient portal demo whose purpose is to show a **legacy Angular app being modernized**. It
-contains one feature (Appointment Scheduling), implemented in Angular against a frozen HTTP
-contract that a future frontend migration can reuse verbatim:
+contains a dashboard plus five patient-facing features (Appointment Scheduling, Provider
+Directory, Patient Profile & Demographics, Prescriptions & Medications, Billing & Insurance
+Claims), each implemented in Angular against a frozen HTTP contract that a future frontend
+migration can reuse verbatim:
 
 | App | Path | Role |
 | --- | --- | --- |
@@ -33,7 +35,7 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 | Command | What it does |
 | --- | --- |
 | `npm start` | Both dev servers: API `:8000`, Angular `:4200` |
-| `npm test` | Unit suite: 133 pytest + 64 Karma = **197** |
+| `npm test` | Unit suite: 170 pytest + 106 Karma = **276** |
 | `npm run test:e2e` | Builds, then runs the Playwright specs against the frontend |
 | `npm run lint` | ruff + Angular eslint, each including a complexity budget (see below) |
 | `npm run typecheck` | mypy (strict) + Angular tsc |
