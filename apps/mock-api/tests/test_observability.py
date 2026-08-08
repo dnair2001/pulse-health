@@ -234,11 +234,11 @@ def test_route_template_recovers_the_router_prefix() -> None:
 def test_route_template_handles_the_path_converter() -> None:
     """Regression: `str.format` raised ValueError on `{full_path:path}`, 500ing every SPA route."""
     scope = {
-        "path": "/react/appointments",
+        "path": "/appointments",
         "path_params": {"full_path": "appointments"},
-        "route": _Route("/react/{full_path:path}", "/react/{full_path}"),
+        "route": _Route("/{full_path:path}", "/{full_path}"),
     }
-    assert route_template(scope) == "/react/{full_path}"
+    assert route_template(scope) == "/{full_path}"
 
 
 def test_route_template_handles_a_path_converter_without_path_format() -> None:

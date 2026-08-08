@@ -1,0 +1,24 @@
+<section class="page" *ngIf="!loading">
+  <header class="page__header">
+    <button type="button" class="button button--ghost" (click)="goBack()" data-testid="back">
+      &larr; Back to directory
+    </button>
+  </header>
+
+  <div class="stack" *ngIf="error">
+    <ph-alert-banner
+      [variant]="'error'"
+      [message]="error.message"
+      [dismissible]="false"
+    ></ph-alert-banner>
+  </div>
+
+  <article class="card" *ngIf="provider" data-testid="provider-profile">
+    <h1 class="page__title">{{ provider.name }}</h1>
+    <p class="page__subtitle">{{ provider.specialty }}, {{ provider.credentials }}</p>
+    <p class="provider-profile__location">{{ provider.locationName }}</p>
+    <div class="provider-profile__bio" [innerHTML]="trustedBio" data-testid="provider-bio"></div>
+  </article>
+</section>
+
+<ph-loading-spinner *ngIf="loading" message="Loading provider…"></ph-loading-spinner>

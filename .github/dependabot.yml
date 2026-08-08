@@ -50,31 +50,6 @@ updates:
       - dependency-name: 'typescript'
         update-types: [version-update:semver-major]
 
-  - package-ecosystem: npm
-    directory: /apps/portal-react
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
-    cooldown:
-      default-days: 3
-      semver-major-days: 14
-    groups:
-      react:
-        patterns:
-          - 'react'
-          - 'react-dom'
-          - '@types/react'
-          - '@types/react-dom'
-      test-tooling:
-        patterns:
-          - 'vitest'
-          - '@vitest/*'
-          - '@testing-library/*'
-          - 'jsdom'
-      react-other:
-        patterns: ['*']
-
   - package-ecosystem: pip
     directory: /apps/mock-api
     schedule:

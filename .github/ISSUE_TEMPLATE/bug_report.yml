@@ -1,5 +1,5 @@
 name: Bug report
-description: Something behaves incorrectly in the API, the Angular portal, or the React portal.
+description: Something behaves incorrectly in the API or the Angular portal.
 labels: [bug]
 body:
   - type: markdown
@@ -16,8 +16,6 @@ body:
       options:
         - apps/mock-api (FastAPI)
         - apps/portal-angular (Angular 17)
-        - apps/portal-react (React 19)
-        - Divergence between the two frontends
         - Tooling / root scripts
     validations:
       required: true
@@ -34,9 +32,6 @@ body:
     id: expected
     attributes:
       label: What you expected
-      description: |
-        If this is a frontend divergence, remember that Angular is the reference
-        implementation by definition — say what Angular renders.
     validations:
       required: true
 
@@ -46,7 +41,7 @@ body:
       label: Steps to reproduce
       placeholder: |
         1. npm start
-        2. Open http://localhost:4300/appointments
+        2. Open http://localhost:4200/appointments
         3. ...
     validations:
       required: true

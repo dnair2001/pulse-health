@@ -2,7 +2,7 @@
   "name": "pulse-health-e2e",
   "version": "0.1.0",
   "private": true,
-  "description": "Browser-level suite driving both frontends against one mock API",
+  "description": "Browser-level suite driving the Angular frontend against one mock API",
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",

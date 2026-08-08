@@ -20,6 +20,7 @@ const PROVIDERS: Provider[] = [
     specialty: 'Primary Care',
     credentials: 'MD',
     locationName: 'Pulse Health Downtown',
+    bio: 'Dr. Nguyen has practiced primary care for over a decade.',
   },
 ];
 

@@ -1,5 +1,6 @@
+import re
 from collections.abc import Iterable, Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from app.domain.errors import ApiError, ErrorCode, not_found, validation_error
 from app.domain.models import (
@@ -7,6 +8,14 @@ from app.domain.models import (
     AppointmentRecord,
     AppointmentScope,
     AppointmentStatus,
+    Invoice,
+    InvoiceRecord,
+    InvoiceStatus,
+    Patient,
+    PatientProfile,
+    Prescription,
+    PrescriptionRecord,
+    PrescriptionStatus,
     Provider,
     ProviderSummary,
     Slot,
@@ -17,6 +26,16 @@ REASON_MIN_LENGTH = 3
 REASON_MAX_LENGTH = 500
 
 _APPOINTMENT_ID_PREFIX = "apt_"
+_PRESCRIPTION_ID_PREFIX = "rx_"
+
+# Local and domain parts are matched separately (rather than in one pattern with a
+# shared `.` boundary) so a crafted string like "!@!." x N can't make the engine
+# backtrack through every split point between the two `+` groups: see CVE-style
+# ReDoS reports against the common `^[^@\s]+@[^@\s]+\.[^@\s]+$` email pattern.
+EMAIL_MAX_LENGTH = 254
+_EMAIL_LOCAL_PATTERN = re.compile(r"^[^@\s]+$")
+_EMAIL_DOMAIN_PATTERN = re.compile(r"^[^@\s]+$")
+_PHONE_PATTERN = re.compile(r"^[0-9()+\-.\s]{7,20}$")
 
 
 def now_utc() -> datetime:
@@ -90,6 +109,32 @@ def parse_scope(raw: str | None, field: str = "scope") -> AppointmentScope | Non
 
 def parse_statuses(raw: Sequence[str] | None) -> list[AppointmentStatus]:
     return [parse_status(value) for value in raw or []]
+
+
+def parse_prescription_status(raw: str | None, field: str = "status") -> PrescriptionStatus | None:
+    if raw is None:
+        return None
+    try:
+        return PrescriptionStatus(raw)
+    except ValueError:
+        raise validation_error(
+            f"'{raw}' is not a valid prescription status. Choose one of: "
+            f"{_join(s.value for s in PrescriptionStatus)}.",
+            field,
+        ) from None
+
+
+def parse_invoice_status(raw: str | None, field: str = "status") -> InvoiceStatus | None:
+    if raw is None:
+        return None
+    try:
+        return InvoiceStatus(raw)
+    except ValueError:
+        raise validation_error(
+            f"'{raw}' is not a valid invoice status. Choose one of: "
+            f"{_join(s.value for s in InvoiceStatus)}.",
+            field,
+        ) from None
 
 
 def parse_visit_types(raw: Sequence[str] | None) -> list[VisitTypeId]:
@@ -243,6 +288,68 @@ def select_appointments(
     return selected
 
 
+def the_patient(patients: Sequence[Patient]) -> Patient:
+    """Single-patient demo: with no auth, `/patients/me` always resolves to
+    the one seeded record."""
+    if not patients:
+        raise not_found("We could not find a patient profile.", "patientId")
+    return patients[0]
+
+
+def to_patient_profile(patient: Patient) -> PatientProfile:
+    return PatientProfile(
+        id=patient.id,
+        name=patient.name,
+        date_of_birth=patient.date_of_birth,
+        ssn_last4=patient.ssn[-4:],
+        email=patient.email,
+        phone=patient.phone,
+        address_line=patient.address_line,
+        city=patient.city,
+        state=patient.state,
+        postal_code=patient.postal_code,
+        emergency_contact_name=patient.emergency_contact_name,
+        emergency_contact_phone=patient.emergency_contact_phone,
+    )
+
+
+def validate_email(raw: str, field: str = "email") -> str:
+    email = raw.strip()
+    invalid = validation_error("Please enter a valid email address.", field)
+    if not email or len(email) > EMAIL_MAX_LENGTH:
+        raise invalid
+    local, _, domain = email.partition("@")
+    if (
+        not local
+        or not domain
+        or "." not in domain
+        or domain.startswith(".")
+        or domain.endswith(".")
+        or not _EMAIL_LOCAL_PATTERN.match(local)
+        or not _EMAIL_DOMAIN_PATTERN.match(domain)
+    ):
+        raise invalid
+    return email
+
+
+def validate_phone(raw: str, field: str) -> str:
+    phone = raw.strip()
+    if not phone or not _PHONE_PATTERN.match(phone):
+        raise validation_error("Please enter a valid phone number.", field)
+    return phone
+
+
+def validate_required_text(raw: str, field: str, label: str) -> str:
+    value = raw.strip()
+    if not value:
+        raise validation_error(f"Please enter {label}.", field)
+    return value
+
+
+def verify_identity(patient: Patient, ssn: str, date_of_birth: str) -> bool:
+    return ssn.strip() == patient.ssn and date_of_birth.strip() == patient.date_of_birth.isoformat()
+
+
 def next_appointment_id(records: Iterable[AppointmentRecord]) -> str:
     highest = 0
     for record in records:
@@ -250,3 +357,91 @@ def next_appointment_id(records: Iterable[AppointmentRecord]) -> str:
         if suffix.isdigit():
             highest = max(highest, int(suffix))
     return f"{_APPOINTMENT_ID_PREFIX}{highest + 1:03d}"
+
+
+def require_prescription(
+    records: Sequence[PrescriptionRecord], prescription_id: str
+) -> PrescriptionRecord:
+    for record in records:
+        if record.id == prescription_id:
+            return record
+    raise not_found("We could not find that prescription.", "id")
+
+
+def to_prescription(record: PrescriptionRecord, provider: Provider) -> Prescription:
+    return Prescription(
+        id=record.id,
+        provider_id=record.provider_id,
+        provider=to_summary(provider),
+        medication_name=record.medication_name,
+        dosage=record.dosage,
+        frequency=record.frequency,
+        instructions=record.instructions,
+        status=record.status,
+        refills_remaining=record.refills_remaining,
+        last_filled_at=record.last_filled_at,
+        created_at=record.created_at,
+        updated_at=record.updated_at,
+    )
+
+
+def ensure_refillable(record: PrescriptionRecord) -> None:
+    if record.status is not PrescriptionStatus.ACTIVE:
+        raise ApiError(
+            ErrorCode.PRESCRIPTION_NOT_REFILLABLE,
+            "This prescription is no longer active, so it cannot be refilled.",
+        )
+    if record.refills_remaining <= 0:
+        raise ApiError(
+            ErrorCode.NO_REFILLS_REMAINING,
+            "There are no refills remaining. Please contact your provider.",
+        )
+
+
+def require_invoice(records: Sequence[InvoiceRecord], invoice_id: str) -> InvoiceRecord:
+    for record in records:
+        if record.id == invoice_id:
+            return record
+    raise not_found("We could not find that invoice.", "id")
+
+
+def to_invoice(record: InvoiceRecord, provider: Provider, today: date) -> Invoice:
+    patient_responsibility_cents = record.billed_amount_cents - record.insurance_paid_cents
+    balance_cents = patient_responsibility_cents - record.amount_paid_cents
+    return Invoice(
+        id=record.id,
+        provider_id=record.provider_id,
+        provider=to_summary(provider),
+        service_description=record.service_description,
+        billed_amount_cents=record.billed_amount_cents,
+        insurance_paid_cents=record.insurance_paid_cents,
+        patient_responsibility_cents=patient_responsibility_cents,
+        amount_paid_cents=record.amount_paid_cents,
+        balance_cents=balance_cents,
+        status=record.status,
+        overdue=record.status is InvoiceStatus.OPEN and record.due_date < today,
+        due_date=record.due_date,
+        issued_at=record.issued_at,
+        updated_at=record.updated_at,
+    )
+
+
+def validate_payment_amount(record: InvoiceRecord, amount_cents: int) -> int:
+    if record.status is InvoiceStatus.PAID:
+        raise ApiError(
+            ErrorCode.INVOICE_ALREADY_PAID,
+            "This invoice has already been paid in full.",
+        )
+    if amount_cents <= 0:
+        raise validation_error("Enter a payment amount greater than zero.", "amountCents")
+
+    balance_cents = (
+        record.billed_amount_cents - record.insurance_paid_cents - record.amount_paid_cents
+    )
+    if amount_cents > balance_cents:
+        raise ApiError(
+            ErrorCode.PAYMENT_EXCEEDS_BALANCE,
+            f"That is more than the ${balance_cents / 100:.2f} balance on this invoice.",
+            "amountCents",
+        )
+    return balance_cents

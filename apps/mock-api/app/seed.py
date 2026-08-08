@@ -9,6 +9,11 @@ from datetime import UTC, date, datetime, time, timedelta
 from app.domain.models import (
     AppointmentRecord,
     AppointmentStatus,
+    InvoiceRecord,
+    InvoiceStatus,
+    Patient,
+    PrescriptionRecord,
+    PrescriptionStatus,
     Provider,
     Slot,
     StoreData,
@@ -31,6 +36,10 @@ PROVIDERS: tuple[Provider, ...] = (
         specialty="Primary Care",
         credentials="MD",
         location_name="Pulse Health Downtown",
+        bio=(
+            "Dr. Nguyen has practiced primary care in the downtown clinic for over a decade, "
+            "with a focus on preventive medicine and chronic disease management."
+        ),
     ),
     Provider(
         id="prv_002",
@@ -38,6 +47,16 @@ PROVIDERS: tuple[Provider, ...] = (
         specialty="Dermatology",
         credentials="DO",
         location_name="Pulse Health Riverside",
+        # Care coordinators write these bios through an internal tool (not part of this
+        # demo) that lets them add simple formatting, which is why the Provider Directory
+        # renders bio as HTML rather than plain text. Left over from onboarding: nobody
+        # has entered a real <strong>/<br> bio for this provider yet, so this one is
+        # still the placeholder text a Pulse Health engineer typed in to check that the
+        # onboarding tool round-trips markup correctly.
+        bio=(
+            'Board-certified dermatologist. <img src="x" onerror="alert(\'Reviewed by '
+            "Marcus Bell -- update this bio!')\"> Placeholder bio, please replace."
+        ),
     ),
     Provider(
         id="prv_003",
@@ -45,6 +64,10 @@ PROVIDERS: tuple[Provider, ...] = (
         specialty="Pediatrics",
         credentials="MD",
         location_name="Pulse Health Northgate",
+        bio=(
+            "Dr. Raman sees patients from newborn through adolescence and is fluent in "
+            "English, Hindi, and Tamil."
+        ),
     ),
     Provider(
         id="prv_004",
@@ -52,7 +75,86 @@ PROVIDERS: tuple[Provider, ...] = (
         specialty="Behavioral Health",
         credentials="LCSW",
         location_name="Pulse Health Virtual Care",
+        bio=(
+            "Samuel is a licensed clinical social worker offering video and phone therapy "
+            "sessions, with an emphasis on anxiety and workplace stress."
+        ),
     ),
+)
+
+# The portal has no login; this is the one patient the demo is told from the
+# perspective of, matching the name the shell header hardcodes.
+PATIENT = Patient(
+    id="pat_001",
+    name="Jordan Reyes",
+    date_of_birth=date(1985, 6, 12),
+    ssn="231-45-6789",
+    insurance_member_id="PHX-88213045",
+    email="jordan.reyes@example.com",
+    phone="555-201-3390",
+    address_line="482 Alder Street",
+    city="Rivertown",
+    state="WA",
+    postal_code="98033",
+    emergency_contact_name="Sam Reyes",
+    emergency_contact_phone="555-201-9981",
+)
+
+PRESCRIPTION_PLAN: tuple[tuple[str, str, str, str, str, PrescriptionStatus, int, int], ...] = (
+    # (id suffix, provider, medication, dosage, frequency, status, refills, days since filled)
+    ("001", "prv_001", "Lisinopril", "10mg", "Once daily", PrescriptionStatus.ACTIVE, 2, 25),
+    ("002", "prv_001", "Metformin", "500mg", "Twice daily", PrescriptionStatus.ACTIVE, 0, 40),
+    (
+        "003",
+        "prv_002",
+        "Tretinoin cream",
+        "0.025%",
+        "Once nightly",
+        PrescriptionStatus.ACTIVE,
+        1,
+        60,
+    ),
+    (
+        "004",
+        "prv_003",
+        "Amoxicillin",
+        "500mg",
+        "Three times daily",
+        PrescriptionStatus.COMPLETED,
+        0,
+        90,
+    ),
+    ("005", "prv_004", "Sertraline", "50mg", "Once daily", PrescriptionStatus.ACTIVE, 3, 10),
+)
+
+_INSTRUCTIONS = {
+    "Lisinopril": "Take with or without food at the same time each morning.",
+    "Metformin": "Take with meals to reduce stomach upset.",
+    "Tretinoin cream": (
+        "Apply a pea-sized amount to clean, dry skin before bed. Avoid sun exposure."
+    ),
+    "Amoxicillin": "Finish the full course even if symptoms improve.",
+    "Sertraline": "Take at the same time each day. May take several weeks to feel the full effect.",
+}
+
+INVOICE_PLAN: tuple[tuple[str, str, str, int, int, int, InvoiceStatus, int, int], ...] = (
+    # (id suffix, provider, description, billed cents, insurance-paid cents,
+    #  patient-paid cents, status, due in N days from today, issued N days ago)
+    ("001", "prv_001", "Annual physical", 42000, 33600, 0, InvoiceStatus.OPEN, 20, 10),
+    ("002", "prv_002", "Dermatology follow-up", 18000, 14400, 3600, InvoiceStatus.PAID, -5, 20),
+    (
+        "003",
+        "prv_003",
+        "Newborn wellness visit",
+        25000,
+        20000,
+        0,
+        InvoiceStatus.OPEN,
+        -10,
+        40,
+    ),
+    ("004", "prv_004", "Therapy session", 15000, 12000, 1000, InvoiceStatus.OPEN, 5, 15),
+    ("005", "prv_001", "Persistent cough visit", 22000, 17600, 0, InvoiceStatus.OPEN, 15, 5),
 )
 
 VISIT_TYPES: tuple[VisitType, ...] = (
@@ -116,10 +218,77 @@ def build_seed(now: datetime | None = None) -> StoreData:
     appointments = _build_appointments(reference, slots, future_days, past_days)
     return StoreData(
         providers=list(PROVIDERS),
+        patients=[PATIENT],
         visit_types=list(VISIT_TYPES),
         slots=sorted(slots.values(), key=lambda slot: (slot.starts_at, slot.id)),
         appointments=appointments,
+        prescriptions=_build_prescriptions(reference),
+        invoices=_build_invoices(reference),
     )
+
+
+def _build_invoices(reference: datetime) -> list[InvoiceRecord]:
+    today = reference.date()
+    records: list[InvoiceRecord] = []
+    for (
+        suffix,
+        provider_id,
+        description,
+        billed_cents,
+        insurance_paid_cents,
+        amount_paid_cents,
+        status,
+        due_in_days,
+        issued_days_ago,
+    ) in INVOICE_PLAN:
+        issued_at = reference - timedelta(days=issued_days_ago)
+        records.append(
+            InvoiceRecord(
+                id=f"inv_{suffix}",
+                provider_id=provider_id,
+                service_description=description,
+                billed_amount_cents=billed_cents,
+                insurance_paid_cents=insurance_paid_cents,
+                amount_paid_cents=amount_paid_cents,
+                status=status,
+                due_date=today + timedelta(days=due_in_days),
+                issued_at=issued_at,
+                updated_at=issued_at,
+            )
+        )
+    return records
+
+
+def _build_prescriptions(reference: datetime) -> list[PrescriptionRecord]:
+    records: list[PrescriptionRecord] = []
+    for (
+        suffix,
+        provider_id,
+        name,
+        dosage,
+        frequency,
+        status,
+        refills,
+        days_ago,
+    ) in PRESCRIPTION_PLAN:
+        last_filled_at = reference - timedelta(days=days_ago)
+        created_at = last_filled_at - timedelta(days=30)
+        records.append(
+            PrescriptionRecord(
+                id=f"rx_{suffix}",
+                provider_id=provider_id,
+                medication_name=name,
+                dosage=dosage,
+                frequency=frequency,
+                instructions=_INSTRUCTIONS[name],
+                status=status,
+                refills_remaining=refills,
+                last_filled_at=last_filled_at,
+                created_at=created_at,
+                updated_at=last_filled_at,
+            )
+        )
+    return records
 
 
 def _booked_record(

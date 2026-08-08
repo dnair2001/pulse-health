@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from typing import Annotated
 
@@ -60,6 +60,10 @@ class Provider(ApiModel):
     specialty: str
     credentials: str
     location_name: str
+    # Free text a care coordinator enters for the public Provider Directory profile.
+    # Not shown anywhere on the appointments booking flow, hence its absence from
+    # ProviderSummary below.
+    bio: str = ""
 
 
 class ProviderSummary(ApiModel):
@@ -115,11 +119,154 @@ class Appointment(ApiModel):
     updated_at: UtcDateTime
 
 
+class Patient(ApiModel):
+    """The single patient this demo portal represents.
+
+    There is no auth, so exactly one record exists and every `/patients/me`
+    request resolves to it.
+    """
+
+    id: str
+    name: str
+    date_of_birth: date
+    ssn: str
+    insurance_member_id: str
+    email: str
+    phone: str
+    address_line: str
+    city: str
+    state: str
+    postal_code: str
+    emergency_contact_name: str
+    emergency_contact_phone: str
+
+
+class PatientProfile(ApiModel):
+    """What the profile page renders: `ssn` never leaves the server unmasked."""
+
+    id: str
+    name: str
+    date_of_birth: date
+    ssn_last4: str
+    email: str
+    phone: str
+    address_line: str
+    city: str
+    state: str
+    postal_code: str
+    emergency_contact_name: str
+    emergency_contact_phone: str
+
+
+class UpdatePatientProfileRequest(ApiModel):
+    """Only contact/demographic details are editable; identity fields are not."""
+
+    email: str = Field(examples=["jordan.reyes@example.com"])
+    phone: str = Field(examples=["555-201-3390"])
+    address_line: str = Field(examples=["482 Alder Street"])
+    city: str = Field(examples=["Rivertown"])
+    state: str = Field(examples=["WA"])
+    postal_code: str = Field(examples=["98033"])
+    emergency_contact_name: str = Field(examples=["Sam Reyes"])
+    emergency_contact_phone: str = Field(examples=["555-201-9981"])
+
+
+class VerifyIdentityResponse(ApiModel):
+    verified: bool
+    insurance_member_id: str
+
+
+class PrescriptionStatus(StrEnum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class PrescriptionRecord(ApiModel):
+    """What is persisted: no embedded provider, so nothing can go stale on disk."""
+
+    id: str
+    provider_id: str
+    medication_name: str
+    dosage: str
+    frequency: str
+    instructions: str
+    status: PrescriptionStatus
+    refills_remaining: int
+    last_filled_at: UtcDateTime
+    created_at: UtcDateTime
+    updated_at: UtcDateTime
+
+
+class Prescription(ApiModel):
+    id: str
+    provider_id: str
+    provider: ProviderSummary
+    medication_name: str
+    dosage: str
+    frequency: str
+    instructions: str
+    status: PrescriptionStatus
+    refills_remaining: int
+    last_filled_at: UtcDateTime
+    created_at: UtcDateTime
+    updated_at: UtcDateTime
+
+
+class InvoiceStatus(StrEnum):
+    OPEN = "open"
+    PAID = "paid"
+
+
+class InvoiceRecord(ApiModel):
+    """What is persisted.
+
+    `patientResponsibilityCents` and `balanceCents` on `Invoice` below are
+    derived rather than stored, so a stale write can never disagree with the
+    figures they are computed from.
+    """
+
+    id: str
+    provider_id: str
+    service_description: str
+    billed_amount_cents: int
+    insurance_paid_cents: int
+    amount_paid_cents: int
+    status: InvoiceStatus
+    due_date: date
+    issued_at: UtcDateTime
+    updated_at: UtcDateTime
+
+
+class Invoice(ApiModel):
+    id: str
+    provider_id: str
+    provider: ProviderSummary
+    service_description: str
+    billed_amount_cents: int
+    insurance_paid_cents: int
+    patient_responsibility_cents: int
+    amount_paid_cents: int
+    balance_cents: int
+    status: InvoiceStatus
+    overdue: bool
+    due_date: date
+    issued_at: UtcDateTime
+    updated_at: UtcDateTime
+
+
+class RecordPaymentRequest(ApiModel):
+    amount_cents: int = Field(examples=[8400])
+
+
 class StoreData(ApiModel):
     providers: list[Provider]
+    patients: list[Patient]
     visit_types: list[VisitType]
     slots: list[Slot]
     appointments: list[AppointmentRecord]
+    prescriptions: list[PrescriptionRecord]
+    invoices: list[InvoiceRecord]
 
 
 class CreateAppointmentRequest(ApiModel):

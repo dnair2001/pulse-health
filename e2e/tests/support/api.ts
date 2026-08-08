@@ -25,6 +25,7 @@ export interface Appointment {
 
 export interface Provider extends ProviderSummary {
   credentials: string;
+  bio: string;
 }
 
 export interface Slot {
@@ -76,6 +77,10 @@ export class Api {
 
   providers(): Promise<Provider[]> {
     return this.json<Provider[]>('/api/providers');
+  }
+
+  provider(id: string): Promise<Provider> {
+    return this.json<Provider>(`/api/providers/${encodeURIComponent(id)}`);
   }
 
   visitTypes(): Promise<VisitType[]> {

@@ -2,13 +2,39 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
-  { path: '', redirectTo: 'appointments', pathMatch: 'full' },
+  {
+    path: '',
+    pathMatch: 'full',
+    loadChildren: () =>
+      import('./features/dashboard/dashboard.module').then((m) => m.DashboardModule),
+  },
   {
     path: 'appointments',
     loadChildren: () =>
       import('./features/appointments/appointments.module').then((m) => m.AppointmentsModule),
   },
-  { path: '**', redirectTo: 'appointments' },
+  {
+    path: 'providers',
+    loadChildren: () =>
+      import('./features/providers/providers.module').then((m) => m.ProvidersModule),
+  },
+  {
+    path: 'profile',
+    loadChildren: () =>
+      import('./features/patient-profile/patient-profile.module').then(
+        (m) => m.PatientProfileModule,
+      ),
+  },
+  {
+    path: 'prescriptions',
+    loadChildren: () =>
+      import('./features/prescriptions/prescriptions.module').then((m) => m.PrescriptionsModule),
+  },
+  {
+    path: 'billing',
+    loadChildren: () => import('./features/billing/billing.module').then((m) => m.BillingModule),
+  },
+  { path: '**', redirectTo: '' },
 ];
 
 @NgModule({

@@ -1,0 +1,151 @@
+<section class="page">
+  <header class="page__header">
+    <div>
+      <h1 class="page__title">Billing &amp; insurance</h1>
+      <p class="page__subtitle">Review what your insurance covered and pay what you owe.</p>
+    </div>
+  </header>
+
+  <ph-alert-banner
+    *ngIf="banner"
+    [variant]="banner.variant"
+    [message]="banner.text"
+    (dismissed)="dismissBanner()"
+  ></ph-alert-banner>
+
+  <nav class="tabs" role="tablist">
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.tab--active]="scope === ''"
+      [attr.aria-selected]="scope === ''"
+      (click)="selectScope('')"
+      data-testid="tab-all"
+    >
+      All
+    </button>
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.tab--active]="scope === 'open'"
+      [attr.aria-selected]="scope === 'open'"
+      (click)="selectScope('open')"
+      data-testid="tab-open"
+    >
+      Open
+    </button>
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.tab--active]="scope === 'paid'"
+      [attr.aria-selected]="scope === 'paid'"
+      (click)="selectScope('paid')"
+      data-testid="tab-paid"
+    >
+      Paid
+    </button>
+  </nav>
+
+  <ph-loading-spinner *ngIf="loading" message="Loading your invoices…"></ph-loading-spinner>
+
+  <div class="stack" *ngIf="error && !loading">
+    <ph-alert-banner
+      [variant]="'error'"
+      [message]="error.message"
+      [dismissible]="false"
+    ></ph-alert-banner>
+    <button type="button" class="button button--ghost" (click)="load()" data-testid="retry">
+      Try again
+    </button>
+  </div>
+
+  <ph-empty-state
+    *ngIf="isEmpty"
+    title="No invoices here"
+    message="Invoices from your visits will show up in this list."
+  ></ph-empty-state>
+
+  <div class="stack" *ngIf="!loading && !error && invoices.length > 0">
+    <article
+      class="card invoice"
+      *ngFor="let invoice of invoices"
+      [attr.data-testid]="'invoice-card-' + invoice.id"
+    >
+      <div class="invoice__header">
+        <div>
+          <h2 class="invoice__description">{{ invoice.serviceDescription }}</h2>
+          <p class="invoice__provider">{{ invoice.provider.name }}</p>
+        </div>
+        <div class="invoice__badges">
+          <span class="badge" [class]="'badge--' + invoice.status">{{ invoice.status }}</span>
+          <span class="badge badge--cancelled" *ngIf="invoice.overdue" data-testid="overdue-badge">
+            overdue
+          </span>
+        </div>
+      </div>
+
+      <dl class="invoice__details">
+        <dt>Billed</dt>
+        <dd>{{ invoice.billedAmountCents / 100 | currency }}</dd>
+        <dt>Insurance paid</dt>
+        <dd>{{ invoice.insurancePaidCents / 100 | currency }}</dd>
+        <dt>Your responsibility</dt>
+        <dd>{{ invoice.patientResponsibilityCents / 100 | currency }}</dd>
+        <dt>Balance</dt>
+        <dd [attr.data-testid]="'balance-' + invoice.id">
+          {{ invoice.balanceCents / 100 | currency }}
+        </dd>
+        <dt>Due</dt>
+        <dd>{{ invoice.dueDate | date: 'd MMM y' }}</dd>
+      </dl>
+
+      <div class="invoice__actions" *ngIf="invoice.status === 'open' && payingInvoiceId !== invoice.id">
+        <button
+          type="button"
+          class="button button--primary"
+          (click)="startPayment(invoice)"
+          [attr.data-testid]="'pay-balance-' + invoice.id"
+        >
+          Pay balance
+        </button>
+      </div>
+
+      <form
+        class="form"
+        [formGroup]="paymentForm"
+        (ngSubmit)="submitPayment(invoice)"
+        *ngIf="payingInvoiceId === invoice.id"
+      >
+        <label class="field">
+          <span class="field__label">Payment amount</span>
+          <input type="number" step="0.01" formControlName="amount" data-testid="payment-amount-input" />
+          <span class="field__error" *ngIf="controlHasError('required')">
+            Enter a payment amount.
+          </span>
+          <span class="field__error" *ngIf="controlHasError('min')">
+            Enter an amount greater than zero.
+          </span>
+          <span class="field__error" *ngIf="serverAmountError()" data-testid="payment-server-error">
+            {{ serverAmountError() }}
+          </span>
+        </label>
+        <div class="form__actions">
+          <button type="button" class="button button--ghost" (click)="cancelPayment()">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="button button--primary"
+            [disabled]="paying"
+            data-testid="submit-payment"
+          >
+            {{ paying ? 'Submitting…' : 'Submit payment' }}
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+</section>

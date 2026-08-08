@@ -5,9 +5,8 @@
 # Apps
 /apps/mock-api/             @dnair2001
 /apps/portal-angular/       @dnair2001
-/apps/portal-react/         @dnair2001
 
-# The frozen contract and the shared conventions: changes here affect all three apps.
+# The frozen contract and the shared conventions: changes here affect both apps.
 /docs/api-contract.md       @dnair2001
 /AGENTS.md                  @dnair2001
 

@@ -24,8 +24,8 @@ groups:
           description: >-
             Frontend error events (pulse_frontend_events_total{level="error"}) have
             averaged more than 0.1/s over the last 5 minutes for 10 minutes straight.
-            Check recent deploys of portal-react / portal-angular and the mock-api
-            /api/telemetry logs for the reported error.name values.
+            Check recent deploys of portal-angular and the mock-api /api/telemetry logs
+            for the reported error.name values.
 
       - alert: PulseAppointmentBookingErrorRateHigh
         # pulse_http_requests_total{route} labels use the route template, never the

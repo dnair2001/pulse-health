@@ -230,8 +230,243 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "Invoice": {
+        "properties": {
+          "amountPaidCents": {
+            "title": "Amountpaidcents",
+            "type": "integer"
+          },
+          "balanceCents": {
+            "title": "Balancecents",
+            "type": "integer"
+          },
+          "billedAmountCents": {
+            "title": "Billedamountcents",
+            "type": "integer"
+          },
+          "dueDate": {
+            "format": "date",
+            "title": "Duedate",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "insurancePaidCents": {
+            "title": "Insurancepaidcents",
+            "type": "integer"
+          },
+          "issuedAt": {
+            "title": "Issuedat",
+            "type": "string"
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "boolean"
+          },
+          "patientResponsibilityCents": {
+            "title": "Patientresponsibilitycents",
+            "type": "integer"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/ProviderSummary"
+          },
+          "providerId": {
+            "title": "Providerid",
+            "type": "string"
+          },
+          "serviceDescription": {
+            "title": "Servicedescription",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/InvoiceStatus"
+          },
+          "updatedAt": {
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "provider",
+          "serviceDescription",
+          "billedAmountCents",
+          "insurancePaidCents",
+          "patientResponsibilityCents",
+          "amountPaidCents",
+          "balanceCents",
+          "status",
+          "overdue",
+          "dueDate",
+          "issuedAt",
+          "updatedAt"
+        ],
+        "title": "Invoice",
+        "type": "object"
+      },
+      "InvoiceStatus": {
+        "enum": [
+          "open",
+          "paid"
+        ],
+        "title": "InvoiceStatus",
+        "type": "string"
+      },
+      "PatientProfile": {
+        "description": "What the profile page renders: `ssn` never leaves the server unmasked.",
+        "properties": {
+          "addressLine": {
+            "title": "Addressline",
+            "type": "string"
+          },
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "format": "date",
+            "title": "Dateofbirth",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "emergencyContactName": {
+            "title": "Emergencycontactname",
+            "type": "string"
+          },
+          "emergencyContactPhone": {
+            "title": "Emergencycontactphone",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "postalCode": {
+            "title": "Postalcode",
+            "type": "string"
+          },
+          "ssnLast4": {
+            "title": "Ssnlast4",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "dateOfBirth",
+          "ssnLast4",
+          "email",
+          "phone",
+          "addressLine",
+          "city",
+          "state",
+          "postalCode",
+          "emergencyContactName",
+          "emergencyContactPhone"
+        ],
+        "title": "PatientProfile",
+        "type": "object"
+      },
+      "Prescription": {
+        "properties": {
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "dosage": {
+            "title": "Dosage",
+            "type": "string"
+          },
+          "frequency": {
+            "title": "Frequency",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "instructions": {
+            "title": "Instructions",
+            "type": "string"
+          },
+          "lastFilledAt": {
+            "title": "Lastfilledat",
+            "type": "string"
+          },
+          "medicationName": {
+            "title": "Medicationname",
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/ProviderSummary"
+          },
+          "providerId": {
+            "title": "Providerid",
+            "type": "string"
+          },
+          "refillsRemaining": {
+            "title": "Refillsremaining",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PrescriptionStatus"
+          },
+          "updatedAt": {
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "provider",
+          "medicationName",
+          "dosage",
+          "frequency",
+          "instructions",
+          "status",
+          "refillsRemaining",
+          "lastFilledAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "Prescription",
+        "type": "object"
+      },
+      "PrescriptionStatus": {
+        "enum": [
+          "active",
+          "completed",
+          "cancelled"
+        ],
+        "title": "PrescriptionStatus",
+        "type": "string"
+      },
       "Provider": {
         "properties": {
+          "bio": {
+            "default": "",
+            "title": "Bio",
+            "type": "string"
+          },
           "credentials": {
             "title": "Credentials",
             "type": "string"
@@ -290,6 +525,22 @@
           "locationName"
         ],
         "title": "ProviderSummary",
+        "type": "object"
+      },
+      "RecordPaymentRequest": {
+        "properties": {
+          "amountCents": {
+            "examples": [
+              8400
+            ],
+            "title": "Amountcents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "amountCents"
+        ],
+        "title": "RecordPaymentRequest",
         "type": "object"
       },
       "RescheduleAppointmentRequest": {
@@ -354,6 +605,79 @@
         "title": "Slot",
         "type": "object"
       },
+      "UpdatePatientProfileRequest": {
+        "description": "Only contact/demographic details are editable; identity fields are not.",
+        "properties": {
+          "addressLine": {
+            "examples": [
+              "482 Alder Street"
+            ],
+            "title": "Addressline",
+            "type": "string"
+          },
+          "city": {
+            "examples": [
+              "Rivertown"
+            ],
+            "title": "City",
+            "type": "string"
+          },
+          "email": {
+            "examples": [
+              "jordan.reyes@example.com"
+            ],
+            "title": "Email",
+            "type": "string"
+          },
+          "emergencyContactName": {
+            "examples": [
+              "Sam Reyes"
+            ],
+            "title": "Emergencycontactname",
+            "type": "string"
+          },
+          "emergencyContactPhone": {
+            "examples": [
+              "555-201-9981"
+            ],
+            "title": "Emergencycontactphone",
+            "type": "string"
+          },
+          "phone": {
+            "examples": [
+              "555-201-3390"
+            ],
+            "title": "Phone",
+            "type": "string"
+          },
+          "postalCode": {
+            "examples": [
+              "98033"
+            ],
+            "title": "Postalcode",
+            "type": "string"
+          },
+          "state": {
+            "examples": [
+              "WA"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "phone",
+          "addressLine",
+          "city",
+          "state",
+          "postalCode",
+          "emergencyContactName",
+          "emergencyContactPhone"
+        ],
+        "title": "UpdatePatientProfileRequest",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -392,6 +716,24 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VerifyIdentityResponse": {
+        "properties": {
+          "insuranceMemberId": {
+            "title": "Insurancememberid",
+            "type": "string"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "verified",
+          "insuranceMemberId"
+        ],
+        "title": "VerifyIdentityResponse",
         "type": "object"
       },
       "VisitType": {
@@ -713,6 +1055,153 @@
         ]
       }
     },
+    "/api/billing/invoices": {
+      "get": {
+        "operationId": "list_invoices_api_billing_invoices_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Invoice"
+                  },
+                  "title": "Response List Invoices Api Billing Invoices Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Invoices",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/billing/invoices/{invoice_id}": {
+      "get": {
+        "operationId": "get_invoice_api_billing_invoices__invoice_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Invoice",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/billing/invoices/{invoice_id}/payments": {
+      "post": {
+        "operationId": "record_payment_api_billing_invoices__invoice_id__payments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordPaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record Payment",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
     "/api/dev/reset": {
       "post": {
         "operationId": "reset_store_api_dev_reset_post",
@@ -755,6 +1244,254 @@
         ]
       }
     },
+    "/api/patients/me": {
+      "get": {
+        "operationId": "get_my_profile_api_patients_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get My Profile",
+        "tags": [
+          "patients"
+        ]
+      },
+      "patch": {
+        "operationId": "update_my_profile_api_patients_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePatientProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update My Profile",
+        "tags": [
+          "patients"
+        ]
+      }
+    },
+    "/api/patients/verify": {
+      "get": {
+        "operationId": "verify_patient_identity_api_patients_verify_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ssn",
+            "required": true,
+            "schema": {
+              "title": "Ssn",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dob",
+            "required": true,
+            "schema": {
+              "title": "Dob",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyIdentityResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Patient Identity",
+        "tags": [
+          "patients"
+        ]
+      }
+    },
+    "/api/prescriptions": {
+      "get": {
+        "operationId": "list_prescriptions_api_prescriptions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Prescription"
+                  },
+                  "title": "Response List Prescriptions Api Prescriptions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Prescriptions",
+        "tags": [
+          "prescriptions"
+        ]
+      }
+    },
+    "/api/prescriptions/{prescription_id}": {
+      "get": {
+        "operationId": "get_prescription_api_prescriptions__prescription_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescription_id",
+            "required": true,
+            "schema": {
+              "title": "Prescription Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prescription"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Prescription",
+        "tags": [
+          "prescriptions"
+        ]
+      }
+    },
+    "/api/prescriptions/{prescription_id}/refill-request": {
+      "post": {
+        "operationId": "request_refill_api_prescriptions__prescription_id__refill_request_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescription_id",
+            "required": true,
+            "schema": {
+              "title": "Prescription Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prescription"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Refill",
+        "tags": [
+          "prescriptions"
+        ]
+      }
+    },
     "/api/providers": {
       "get": {
         "operationId": "list_providers_api_providers_get",
@@ -775,6 +1512,48 @@
           }
         },
         "summary": "List Providers",
+        "tags": [
+          "providers"
+        ]
+      }
+    },
+    "/api/providers/{provider_id}": {
+      "get": {
+        "operationId": "get_provider_api_providers__provider_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Provider",
         "tags": [
           "providers"
         ]

@@ -8,17 +8,10 @@ minimum_pre_commit_version: "3.5.0"
 default_install_hook_types: [pre-commit]
 fail_fast: false
 
-# The copied stylesheets and the Angular templates are excluded from every whitespace
-# rewriting hook below. apps/portal-react/src/styles/global.scss is a verbatim copy: its
-# first 413 lines are apps/portal-angular/src/styles.scss and its last 68 are
-# apps/portal-angular/src/app/app.component.scss. Byte-equality of those three files, and
-# the rendered whitespace of the templates, are invariants (see AGENTS.md invariant 3), so
-# a stray trailing-whitespace or final-newline fix there is a defect, not a cleanup.
+# The Angular templates are excluded from every whitespace rewriting hook below: their
+# rendered whitespace is user-visible output, not source formatting to normalize.
 exclude: |
   (?x)^(
-    apps/portal-react/src/styles/global\.scss|
-    apps/portal-angular/src/styles\.scss|
-    apps/portal-angular/src/app/app\.component\.scss|
     .*\.html
   )$
 
@@ -31,16 +24,15 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-json
-        # These are JSON-with-comments (tsconfig, devcontainer, VS Code, and the ESLint/oxlint
-        # configs' measured-threshold rationale comments); a strict JSON parser rejects them
+        # These are JSON-with-comments (tsconfig, devcontainer, VS Code, and the ESLint
+        # config's measured-threshold rationale comments); a strict JSON parser rejects them
         # even though every tool that reads them accepts comments.
         exclude: |
           (?x)^(
             \.devcontainer/devcontainer\.json|
             apps/portal-angular/\.vscode/.*\.json|
             apps/.*/tsconfig.*\.json|
-            apps/portal-angular/\.eslintrc\.json|
-            apps/portal-react/\.oxlintrc\.json
+            apps/portal-angular/\.eslintrc\.json
           )$
       - id: check-merge-conflict
       - id: detect-private-key
@@ -88,22 +80,6 @@ repos:
         pass_filenames: false
         files: ^apps/mock-api/(app/.*\.py|demo_server\.py|requirements.*\.txt)$
 
-      - id: oxlint
-        name: oxlint (portal-react)
-        entry: apps/portal-react/node_modules/.bin/oxlint
-        language: system
-        files: ^apps/portal-react/src/.*\.(ts|tsx|js|jsx)$
-
-      - id: knip-react
-        name: knip (portal-react dead code)
-        # Whole-project check, same reason as vulture above. knip resolves its config and
-        # entry points relative to the current directory, not the entry binary's path, so
-        # this needs an explicit cd the same way mypy's hook does.
-        entry: bash -c 'cd apps/portal-react && node_modules/.bin/knip'
-        language: system
-        pass_filenames: false
-        files: ^apps/portal-react/(src/.*\.(ts|tsx)|package\.json)$
-
       - id: eslint-angular
         name: eslint (portal-angular)
         entry: apps/portal-angular/node_modules/.bin/eslint --resolve-plugins-relative-to
@@ -120,7 +96,7 @@ repos:
         files: ^apps/portal-angular/(src/.*\.ts|package\.json)$
 
       - id: jscpd
-        name: jscpd (duplicate code, all apps)
+        name: jscpd (duplicate code, both apps)
         entry: node_modules/.bin/jscpd -c .jscpd.json
         language: system
         pass_filenames: false

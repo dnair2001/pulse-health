@@ -28,7 +28,7 @@ _PLACEHOLDER = re.compile(r"\{([^{}:]+)(?::[^{}]*)?\}")
 
 
 def _strip_converters(template: str) -> str:
-    """`/react/{full_path:path}` -> `/react/{full_path}`."""
+    """`/{full_path:path}` -> `/{full_path}`."""
     return _PLACEHOLDER.sub(lambda m: "{" + m.group(1) + "}", template)
 
 

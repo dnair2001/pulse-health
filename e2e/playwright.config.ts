@@ -3,10 +3,10 @@ import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * The demo server (`apps/mock-api/demo_server.py`) is the only place both frontends and the API
- * live on one origin, which is what makes an Angular-vs-React comparison possible in one run.
- * Port 8080 is reserved for the long-lived demo instance humans view over a forwarded port, so
- * the suite defaults to 8099 instead of competing for it.
+ * The demo server (`apps/mock-api/demo_server.py`) serves the frontend and the API on one
+ * origin, which is what lets Playwright drive both without CORS. Port 8080 is reserved for the
+ * long-lived demo instance humans view over a forwarded port, so the suite defaults to 8099
+ * instead of competing for it.
  */
 const port = Number(process.env.E2E_PORT ?? 8099);
 
@@ -35,7 +35,7 @@ export default defineConfig({
   webServer: externalBaseURL
     ? undefined
     : {
-        // demo_server.py refuses to import unless both bundles exist, so a missing
+        // demo_server.py refuses to import unless the bundle exists, so a missing
         // `npm run demo:build` fails here with that message rather than as a blank page.
         command: `.venv/bin/uvicorn demo_server:app --host 127.0.0.1 --port ${port}`,
         cwd: mockApiDir,

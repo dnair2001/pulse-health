@@ -1,0 +1,116 @@
+<section class="page">
+  <header class="page__header">
+    <div>
+      <h1 class="page__title">Your prescriptions</h1>
+      <p class="page__subtitle">Review your medications and request a refill.</p>
+    </div>
+  </header>
+
+  <ph-alert-banner
+    *ngIf="banner"
+    [variant]="banner.variant"
+    [message]="banner.text"
+    (dismissed)="dismissBanner()"
+  ></ph-alert-banner>
+
+  <nav class="tabs" role="tablist">
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.tab--active]="scope === ''"
+      [attr.aria-selected]="scope === ''"
+      (click)="selectScope('')"
+      data-testid="tab-all"
+    >
+      All
+    </button>
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.tab--active]="scope === 'active'"
+      [attr.aria-selected]="scope === 'active'"
+      (click)="selectScope('active')"
+      data-testid="tab-active"
+    >
+      Active
+    </button>
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.tab--active]="scope === 'completed'"
+      [attr.aria-selected]="scope === 'completed'"
+      (click)="selectScope('completed')"
+      data-testid="tab-completed"
+    >
+      Completed
+    </button>
+  </nav>
+
+  <ph-loading-spinner *ngIf="loading" message="Loading your prescriptions…"></ph-loading-spinner>
+
+  <div class="stack" *ngIf="error && !loading">
+    <ph-alert-banner
+      [variant]="'error'"
+      [message]="error.message"
+      [dismissible]="false"
+    ></ph-alert-banner>
+    <button type="button" class="button button--ghost" (click)="load()" data-testid="retry">
+      Try again
+    </button>
+  </div>
+
+  <ph-empty-state
+    *ngIf="isEmpty"
+    title="No prescriptions here"
+    message="Prescriptions from your care team will show up in this list."
+  ></ph-empty-state>
+
+  <div class="stack" *ngIf="!loading && !error && prescriptions.length > 0">
+    <article
+      class="card prescription"
+      *ngFor="let prescription of prescriptions"
+      [attr.data-testid]="'prescription-card-' + prescription.id"
+    >
+      <div class="prescription__header">
+        <div>
+          <h2 class="prescription__medication">{{ prescription.medicationName }} {{ prescription.dosage }}</h2>
+          <p class="prescription__frequency">{{ prescription.frequency }}</p>
+        </div>
+        <span class="badge" [class]="'badge--' + prescription.status">{{ prescription.status }}</span>
+      </div>
+
+      <p class="prescription__instructions">{{ prescription.instructions }}</p>
+
+      <dl class="prescription__details">
+        <dt>Prescriber</dt>
+        <dd>{{ prescription.provider.name }}</dd>
+        <dt>Refills remaining</dt>
+        <dd data-testid="refills-remaining">{{ prescription.refillsRemaining }}</dd>
+        <dt>Last filled</dt>
+        <dd>{{ prescription.lastFilledAt | date: 'd MMM y' }}</dd>
+      </dl>
+
+      <div class="prescription__actions">
+        <button
+          type="button"
+          class="button button--primary"
+          [disabled]="!canRefill(prescription) || refillingId === prescription.id"
+          (click)="requestRefill(prescription)"
+          [attr.data-testid]="'refill-' + prescription.id"
+        >
+          {{ refillingId === prescription.id ? 'Requesting…' : 'Request refill' }}
+        </button>
+        <p class="prescription__blocked" *ngIf="!canRefill(prescription)">
+          {{
+            prescription.status !== 'active'
+              ? 'This prescription is no longer active.'
+              : 'No refills remaining. Contact your provider.'
+          }}
+        </p>
+      </div>
+    </article>
+  </div>
+</section>

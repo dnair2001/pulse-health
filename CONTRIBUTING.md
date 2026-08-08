@@ -11,7 +11,7 @@ rather build in a container than install these locally.
 
 ```bash
 npm install     # root tooling
-npm run setup   # python venv + both frontends' node_modules
+npm run setup   # python venv + Angular node_modules
 ```
 
 ## Commands
@@ -20,22 +20,21 @@ Always use the root scripts rather than per-app invocations.
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | All three dev servers: API `:8000`, Angular `:4200`, React `:4300` |
-| `npm test` | Full suite: 133 pytest + 64 Karma + 86 Vitest = 283 |
-| `npm run lint` | ruff + Angular eslint + oxlint (each includes a complexity budget — see AGENTS.md) |
-| `npm run build` | Production bundles for both frontends |
-| `npm run demo` | Builds, then serves both frontends + API on `:8080` |
+| `npm start` | Both dev servers: API `:8000`, Angular `:4200` |
+| `npm test` | Full suite: 170 pytest + 106 Karma = 276 |
+| `npm run lint` | ruff + Angular eslint (includes a complexity budget — see AGENTS.md) |
+| `npm run build` | Production bundle |
+| `npm run demo` | Builds, then serves the frontend + API on `:8080` |
 | `npm run reset:data` | Reseeds the mock API relative to now (API must be running) |
-| `npm run check:duplication` | jscpd duplicate-code budget across all three apps |
+| `npm run check:duplication` | jscpd duplicate-code budget across both apps |
 | `npm run check:doc-freshness` | Confirms the test counts documented in AGENTS.md/README.md/CONTRIBUTING.md/the PR template still match the live suites |
 
-Per-app variants exist for tight loops: `test:api`, `test:angular`, `test:react`, and the same
-pattern for `lint:` and `build:`. Dead-code/unused-dependency checks run per app too: `knip`
-(`npm run lint:deadcode` in each frontend) and, for mock-api, `vulture` + `pip-extra-reqs`
+Per-app variants exist for tight loops: `test:api`, `test:angular`, and the same pattern for
+`lint:` and `build:`. Dead-code/unused-dependency checks run per app too: `knip`
+(`npm run lint:deadcode` in `apps/portal-angular`) and, for mock-api, `vulture` + `pip-extra-reqs`
 (run directly via its venv — see AGENTS.md).
 
-Both frontends proxy `/api` to `localhost:8000`, so the API must be running for either to show
-data.
+The frontend proxies `/api` to `localhost:8000`, so the API must be running to show data.
 
 ## The invariants
 
@@ -44,28 +43,22 @@ These are defects when broken, not style preferences. Full text in
 
 1. The API contract in [`docs/api-contract.md`](docs/api-contract.md) is **frozen**.
 2. Business rules live server-side in `apps/mock-api/app/domain/rules.py`.
-3. The two frontends must render **byte-identical** user-visible text.
-4. Tests must pass in a non-UTC timezone.
-5. Angular is the reference implementation; React is the thing to fix.
-
-`apps/portal-angular` is deliberately period-accurate Angular 17. Do not modernize it.
+3. `apps/portal-angular` is deliberately legacy and is the reference implementation for a
+   future migration. Do not modernize it.
 
 ## Before you open a PR
 
 ```bash
 npm run lint && npm test && npm run build
-TZ=America/New_York npm run test:react
 npm run typecheck && npm run format:check
 npm run check:duplication && npm run check:doc-freshness
 ```
 
-All of these must pass. For changes to user-visible strings or date rendering, also verify
-invariant 3 by rendering both apps (`npm run demo`, then diff the text of `/appointments`
-against `/react/appointments`) rather than trusting tests.
+All of these must pass. For changes to user-visible strings or date rendering, also run
+`npm run test:e2e`, which is the only check that renders the app in a real browser.
 
-CI runs the same commands as separate per-app jobs, and runs the React suite under both `UTC`
-and `America/New_York`. The pull request template's checklist mirrors this list — fill it in
-honestly.
+CI runs the same commands as separate per-app jobs. The pull request template's checklist
+mirrors this list — fill it in honestly.
 
 ## Reporting problems
 
