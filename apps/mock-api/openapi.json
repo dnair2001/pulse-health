@@ -232,6 +232,11 @@
       },
       "Provider": {
         "properties": {
+          "bio": {
+            "default": "",
+            "title": "Bio",
+            "type": "string"
+          },
           "credentials": {
             "title": "Credentials",
             "type": "string"
@@ -775,6 +780,48 @@
           }
         },
         "summary": "List Providers",
+        "tags": [
+          "providers"
+        ]
+      }
+    },
+    "/api/providers/{provider_id}": {
+      "get": {
+        "operationId": "get_provider_api_providers__provider_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Provider",
         "tags": [
           "providers"
         ]

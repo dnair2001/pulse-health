@@ -60,6 +60,10 @@ class Provider(ApiModel):
     specialty: str
     credentials: str
     location_name: str
+    # Free text a care coordinator enters for the public Provider Directory profile.
+    # Not shown anywhere on the appointments booking flow, hence its absence from
+    # ProviderSummary below.
+    bio: str = ""
 
 
 class ProviderSummary(ApiModel):

@@ -7,4 +7,5 @@ export interface ProviderSummary {
 
 export interface Provider extends ProviderSummary {
   credentials: string;
+  bio: string;
 }

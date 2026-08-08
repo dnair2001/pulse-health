@@ -31,6 +31,10 @@ PROVIDERS: tuple[Provider, ...] = (
         specialty="Primary Care",
         credentials="MD",
         location_name="Pulse Health Downtown",
+        bio=(
+            "Dr. Nguyen has practiced primary care in the downtown clinic for over a decade, "
+            "with a focus on preventive medicine and chronic disease management."
+        ),
     ),
     Provider(
         id="prv_002",
@@ -38,6 +42,16 @@ PROVIDERS: tuple[Provider, ...] = (
         specialty="Dermatology",
         credentials="DO",
         location_name="Pulse Health Riverside",
+        # Care coordinators write these bios through an internal tool (not part of this
+        # demo) that lets them add simple formatting, which is why the Provider Directory
+        # renders bio as HTML rather than plain text. Left over from onboarding: nobody
+        # has entered a real <strong>/<br> bio for this provider yet, so this one is
+        # still the placeholder text a Pulse Health engineer typed in to check that the
+        # onboarding tool round-trips markup correctly.
+        bio=(
+            'Board-certified dermatologist. <img src="x" onerror="alert(\'Reviewed by '
+            "Marcus Bell -- update this bio!')\"> Placeholder bio, please replace."
+        ),
     ),
     Provider(
         id="prv_003",
@@ -45,6 +59,10 @@ PROVIDERS: tuple[Provider, ...] = (
         specialty="Pediatrics",
         credentials="MD",
         location_name="Pulse Health Northgate",
+        bio=(
+            "Dr. Raman sees patients from newborn through adolescence and is fluent in "
+            "English, Hindi, and Tamil."
+        ),
     ),
     Provider(
         id="prv_004",
@@ -52,6 +70,10 @@ PROVIDERS: tuple[Provider, ...] = (
         specialty="Behavioral Health",
         credentials="LCSW",
         location_name="Pulse Health Virtual Care",
+        bio=(
+            "Samuel is a licensed clinical social worker offering video and phone therapy "
+            "sessions, with an emphasis on anxiety and workplace stress."
+        ),
     ),
 )
 

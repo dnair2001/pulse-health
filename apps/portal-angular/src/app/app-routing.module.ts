@@ -8,6 +8,11 @@ const routes: Routes = [
     loadChildren: () =>
       import('./features/appointments/appointments.module').then((m) => m.AppointmentsModule),
   },
+  {
+    path: 'providers',
+    loadChildren: () =>
+      import('./features/providers/providers.module').then((m) => m.ProvidersModule),
+  },
   { path: '**', redirectTo: 'appointments' },
 ];
 

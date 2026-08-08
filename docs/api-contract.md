@@ -32,9 +32,15 @@ Everything is served under the `/api` prefix. Interactive schema: `/docs`, `/ope
   "name": "Dr. Alice Nguyen",
   "specialty": "Primary Care",
   "credentials": "MD",
-  "locationName": "Pulse Health Downtown"
+  "locationName": "Pulse Health Downtown",
+  "bio": "Dr. Nguyen has practiced primary care..."
 }
 ```
+
+`bio` is free text entered by a care coordinator for the public Provider Directory profile; it
+is additive to this contract (added after the initial appointments-only cut) and is never
+included in the `provider` object embedded in an `Appointment` — see `ProviderSummary` below,
+which intentionally omits it along with `credentials`.
 
 ### VisitType
 
@@ -96,6 +102,7 @@ Every slot is 30 minutes long.
 | --- | --- | --- | --- |
 | GET | `/api/health` | 200 | `{status, service, version, time}` |
 | GET | `/api/providers` | 200 | `Provider[]` |
+| GET | `/api/providers/{id}` | 200 | `Provider` |
 | GET | `/api/visit-types` | 200 | `VisitType[]` |
 | GET | `/api/slots` | 200 | `Slot[]`, see filters |
 | GET | `/api/appointments` | 200 | `Appointment[]`, see filters |
