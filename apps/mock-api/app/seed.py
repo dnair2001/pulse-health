@@ -10,6 +10,8 @@ from app.domain.models import (
     AppointmentRecord,
     AppointmentStatus,
     Patient,
+    PrescriptionRecord,
+    PrescriptionStatus,
     Provider,
     Slot,
     StoreData,
@@ -96,6 +98,43 @@ PATIENT = Patient(
     emergency_contact_phone="555-201-9981",
 )
 
+PRESCRIPTION_PLAN: tuple[tuple[str, str, str, str, str, PrescriptionStatus, int, int], ...] = (
+    # (id suffix, provider, medication, dosage, frequency, status, refills, days since filled)
+    ("001", "prv_001", "Lisinopril", "10mg", "Once daily", PrescriptionStatus.ACTIVE, 2, 25),
+    ("002", "prv_001", "Metformin", "500mg", "Twice daily", PrescriptionStatus.ACTIVE, 0, 40),
+    (
+        "003",
+        "prv_002",
+        "Tretinoin cream",
+        "0.025%",
+        "Once nightly",
+        PrescriptionStatus.ACTIVE,
+        1,
+        60,
+    ),
+    (
+        "004",
+        "prv_003",
+        "Amoxicillin",
+        "500mg",
+        "Three times daily",
+        PrescriptionStatus.COMPLETED,
+        0,
+        90,
+    ),
+    ("005", "prv_004", "Sertraline", "50mg", "Once daily", PrescriptionStatus.ACTIVE, 3, 10),
+)
+
+_INSTRUCTIONS = {
+    "Lisinopril": "Take with or without food at the same time each morning.",
+    "Metformin": "Take with meals to reduce stomach upset.",
+    "Tretinoin cream": (
+        "Apply a pea-sized amount to clean, dry skin before bed. Avoid sun exposure."
+    ),
+    "Amoxicillin": "Finish the full course even if symptoms improve.",
+    "Sertraline": "Take at the same time each day. May take several weeks to feel the full effect.",
+}
+
 VISIT_TYPES: tuple[VisitType, ...] = (
     VisitType(id=VisitTypeId.IN_PERSON, label="In person", duration_minutes=30),
     VisitType(id=VisitTypeId.VIDEO, label="Video visit", duration_minutes=20),
@@ -161,7 +200,40 @@ def build_seed(now: datetime | None = None) -> StoreData:
         visit_types=list(VISIT_TYPES),
         slots=sorted(slots.values(), key=lambda slot: (slot.starts_at, slot.id)),
         appointments=appointments,
+        prescriptions=_build_prescriptions(reference),
     )
+
+
+def _build_prescriptions(reference: datetime) -> list[PrescriptionRecord]:
+    records: list[PrescriptionRecord] = []
+    for (
+        suffix,
+        provider_id,
+        name,
+        dosage,
+        frequency,
+        status,
+        refills,
+        days_ago,
+    ) in PRESCRIPTION_PLAN:
+        last_filled_at = reference - timedelta(days=days_ago)
+        created_at = last_filled_at - timedelta(days=30)
+        records.append(
+            PrescriptionRecord(
+                id=f"rx_{suffix}",
+                provider_id=provider_id,
+                medication_name=name,
+                dosage=dosage,
+                frequency=frequency,
+                instructions=_INSTRUCTIONS[name],
+                status=status,
+                refills_remaining=refills,
+                last_filled_at=last_filled_at,
+                created_at=created_at,
+                updated_at=last_filled_at,
+            )
+        )
+    return records
 
 
 def _booked_record(

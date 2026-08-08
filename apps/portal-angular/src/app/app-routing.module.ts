@@ -20,6 +20,11 @@ const routes: Routes = [
         (m) => m.PatientProfileModule,
       ),
   },
+  {
+    path: 'prescriptions',
+    loadChildren: () =>
+      import('./features/prescriptions/prescriptions.module').then((m) => m.PrescriptionsModule),
+  },
   { path: '**', redirectTo: 'appointments' },
 ];
 

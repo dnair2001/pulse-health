@@ -206,6 +206,11 @@ h4 {
     background: #fee2e2;
     color: #991b1b;
   }
+
+  &--active {
+    background: #ccfbf1;
+    color: #115e59;
+  }
 }
 
 .appointment {
@@ -299,6 +304,63 @@ h4 {
 
   &__bio {
     line-height: 1.6;
+  }
+}
+
+.prescription {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  &__medication {
+    font-size: 1.0625rem;
+  }
+
+  &__frequency {
+    margin: 0.125rem 0 0;
+    color: var(--ph-muted);
+    font-size: 0.875rem;
+  }
+
+  &__instructions {
+    margin: 0;
+  }
+
+  &__details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+
+    dt {
+      color: var(--ph-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    dd {
+      margin: 0.125rem 0 0;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  &__blocked {
+    margin: 0;
+    color: var(--ph-muted);
+    font-size: 0.8125rem;
   }
 }
 

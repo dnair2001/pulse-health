@@ -10,6 +10,9 @@ from app.domain.models import (
     AppointmentStatus,
     Patient,
     PatientProfile,
+    Prescription,
+    PrescriptionRecord,
+    PrescriptionStatus,
     Provider,
     ProviderSummary,
     Slot,
@@ -20,6 +23,7 @@ REASON_MIN_LENGTH = 3
 REASON_MAX_LENGTH = 500
 
 _APPOINTMENT_ID_PREFIX = "apt_"
+_PRESCRIPTION_ID_PREFIX = "rx_"
 
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _PHONE_PATTERN = re.compile(r"^[0-9()+\-.\s]{7,20}$")
@@ -96,6 +100,19 @@ def parse_scope(raw: str | None, field: str = "scope") -> AppointmentScope | Non
 
 def parse_statuses(raw: Sequence[str] | None) -> list[AppointmentStatus]:
     return [parse_status(value) for value in raw or []]
+
+
+def parse_prescription_status(raw: str | None, field: str = "status") -> PrescriptionStatus | None:
+    if raw is None:
+        return None
+    try:
+        return PrescriptionStatus(raw)
+    except ValueError:
+        raise validation_error(
+            f"'{raw}' is not a valid prescription status. Choose one of: "
+            f"{_join(s.value for s in PrescriptionStatus)}.",
+            field,
+        ) from None
 
 
 def parse_visit_types(raw: Sequence[str] | None) -> list[VisitTypeId]:
@@ -306,3 +323,42 @@ def next_appointment_id(records: Iterable[AppointmentRecord]) -> str:
         if suffix.isdigit():
             highest = max(highest, int(suffix))
     return f"{_APPOINTMENT_ID_PREFIX}{highest + 1:03d}"
+
+
+def require_prescription(
+    records: Sequence[PrescriptionRecord], prescription_id: str
+) -> PrescriptionRecord:
+    for record in records:
+        if record.id == prescription_id:
+            return record
+    raise not_found("We could not find that prescription.", "id")
+
+
+def to_prescription(record: PrescriptionRecord, provider: Provider) -> Prescription:
+    return Prescription(
+        id=record.id,
+        provider_id=record.provider_id,
+        provider=to_summary(provider),
+        medication_name=record.medication_name,
+        dosage=record.dosage,
+        frequency=record.frequency,
+        instructions=record.instructions,
+        status=record.status,
+        refills_remaining=record.refills_remaining,
+        last_filled_at=record.last_filled_at,
+        created_at=record.created_at,
+        updated_at=record.updated_at,
+    )
+
+
+def ensure_refillable(record: PrescriptionRecord) -> None:
+    if record.status is not PrescriptionStatus.ACTIVE:
+        raise ApiError(
+            ErrorCode.PRESCRIPTION_NOT_REFILLABLE,
+            "This prescription is no longer active, so it cannot be refilled.",
+        )
+    if record.refills_remaining <= 0:
+        raise ApiError(
+            ErrorCode.NO_REFILLS_REMAINING,
+            "There are no refills remaining. Please contact your provider.",
+        )

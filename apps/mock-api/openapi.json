@@ -300,6 +300,81 @@
         "title": "PatientProfile",
         "type": "object"
       },
+      "Prescription": {
+        "properties": {
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "dosage": {
+            "title": "Dosage",
+            "type": "string"
+          },
+          "frequency": {
+            "title": "Frequency",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "instructions": {
+            "title": "Instructions",
+            "type": "string"
+          },
+          "lastFilledAt": {
+            "title": "Lastfilledat",
+            "type": "string"
+          },
+          "medicationName": {
+            "title": "Medicationname",
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/ProviderSummary"
+          },
+          "providerId": {
+            "title": "Providerid",
+            "type": "string"
+          },
+          "refillsRemaining": {
+            "title": "Refillsremaining",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PrescriptionStatus"
+          },
+          "updatedAt": {
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "provider",
+          "medicationName",
+          "dosage",
+          "frequency",
+          "instructions",
+          "status",
+          "refillsRemaining",
+          "lastFilledAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "Prescription",
+        "type": "object"
+      },
+      "PrescriptionStatus": {
+        "enum": [
+          "active",
+          "completed",
+          "cancelled"
+        ],
+        "title": "PrescriptionStatus",
+        "type": "string"
+      },
       "Provider": {
         "properties": {
           "bio": {
@@ -1029,6 +1104,143 @@
         "summary": "Verify Patient Identity",
         "tags": [
           "patients"
+        ]
+      }
+    },
+    "/api/prescriptions": {
+      "get": {
+        "operationId": "list_prescriptions_api_prescriptions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Prescription"
+                  },
+                  "title": "Response List Prescriptions Api Prescriptions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Prescriptions",
+        "tags": [
+          "prescriptions"
+        ]
+      }
+    },
+    "/api/prescriptions/{prescription_id}": {
+      "get": {
+        "operationId": "get_prescription_api_prescriptions__prescription_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescription_id",
+            "required": true,
+            "schema": {
+              "title": "Prescription Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prescription"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Prescription",
+        "tags": [
+          "prescriptions"
+        ]
+      }
+    },
+    "/api/prescriptions/{prescription_id}/refill-request": {
+      "post": {
+        "operationId": "request_refill_api_prescriptions__prescription_id__refill_request_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prescription_id",
+            "required": true,
+            "schema": {
+              "title": "Prescription Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prescription"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Refill",
+        "tags": [
+          "prescriptions"
         ]
       }
     },

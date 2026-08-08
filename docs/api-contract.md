@@ -65,6 +65,34 @@ There is no login; the portal has exactly one patient, and `/api/patients/me` al
 to it. `ssnLast4` is the only part of the SSN this shape ever exposes; `name` and
 `dateOfBirth` are not editable through `PATCH /api/patients/me`.
 
+### Prescription
+
+```json
+{
+  "id": "rx_001",
+  "providerId": "prv_001",
+  "provider": {
+    "id": "prv_001",
+    "name": "Dr. Alice Nguyen",
+    "specialty": "Primary Care",
+    "locationName": "Pulse Health Downtown"
+  },
+  "medicationName": "Lisinopril",
+  "dosage": "10mg",
+  "frequency": "Once daily",
+  "instructions": "Take with or without food at the same time each morning.",
+  "status": "active",
+  "refillsRemaining": 2,
+  "lastFilledAt": "2026-07-14T00:00:00Z",
+  "createdAt": "2026-06-14T00:00:00Z",
+  "updatedAt": "2026-07-14T00:00:00Z"
+}
+```
+
+- `status` is exactly one of `active`, `completed`, `cancelled`.
+- The embedded `provider` is the same projection used on `Appointment` (no `credentials`).
+- `refillsRemaining` only changes through `POST /api/prescriptions/{id}/refill-request`.
+
 ### VisitType
 
 ```json
@@ -129,6 +157,9 @@ Every slot is 30 minutes long.
 | GET | `/api/patients/me` | 200 | `PatientProfile` |
 | PATCH | `/api/patients/me` | 200 | `{email, phone, addressLine, city, state, postalCode, emergencyContactName, emergencyContactPhone}` |
 | GET | `/api/patients/verify` | 200 | query `ssn`, `dob` -> `{verified, insuranceMemberId}` |
+| GET | `/api/prescriptions` | 200 | `Prescription[]`, optional `?status=` |
+| GET | `/api/prescriptions/{id}` | 200 | `Prescription` |
+| POST | `/api/prescriptions/{id}/refill-request` | 200 | no body |
 | GET | `/api/visit-types` | 200 | `VisitType[]` |
 | GET | `/api/slots` | 200 | `Slot[]`, see filters |
 | GET | `/api/appointments` | 200 | `Appointment[]`, see filters |
@@ -201,6 +232,8 @@ translated into this envelope.
 | `APPOINTMENT_NOT_RESCHEDULABLE` | 409 | rescheduling an appointment whose status is `completed` or `cancelled` |
 | `NOT_FOUND` | 404 | unknown appointment (`field: "id"`), slot (`field: "slotId"`), provider (`field: "providerId"`), or unknown route (`field: null`) |
 | `IDENTITY_NOT_VERIFIED` | 401 | `GET /api/patients/verify` called with an `ssn`/`dob` pair that does not match the patient on file |
+| `PRESCRIPTION_NOT_REFILLABLE` | 409 | refill requested for a prescription whose status is not `active` |
+| `NO_REFILLS_REMAINING` | 409 | refill requested for an `active` prescription with `refillsRemaining == 0` |
 
 ## Business rules
 
@@ -227,6 +260,12 @@ translated into this envelope.
     `{"verified": true, "insuranceMemberId": ...}` when both match the patient on file, or
     `IDENTITY_NOT_VERIFIED` (401) otherwise. Both parameters are required; omitting either is
     `VALIDATION_ERROR` 422.
+11. `POST /api/prescriptions/{id}/refill-request` decrements `refillsRemaining` by one and
+    updates `lastFilledAt`/`updatedAt` to now. It is rejected with `PRESCRIPTION_NOT_REFILLABLE`
+    when `status != "active"`, or `NO_REFILLS_REMAINING` when `refillsRemaining == 0`; the
+    not-refillable check runs first.
+12. `GET /api/prescriptions?status=` filters to that status; an unknown value is
+    `VALIDATION_ERROR` with `field: "status"` (never a silent empty list).
 
 ### Validation order (matters when several rules could fire)
 
@@ -261,6 +300,9 @@ genuinely future slots.
   (Pediatrics, Pulse Health Northgate), `prv_004` Samuel Okafor (Behavioral Health,
   Pulse Health Virtual Care).
 - Patient: `pat_001` Jordan Reyes, the one patient the portal is told from the perspective of.
+- Prescriptions: `rx_001`-`rx_005`, one per provider plus a second for `prv_001`. `rx_002`
+  (Metformin) is seeded with `refillsRemaining: 0` and `rx_004` (Amoxicillin) is seeded
+  `completed`, so both refill error codes are reachable without any mutation first.
 - Future slots: every weekday within the next 14 calendar days, 09:00 to 16:30 UTC in
   30-minute steps, for all four providers (~640 slots).
 - Past slots: every weekday within the previous 14 calendar days at 09:00, 11:00, 14:00 and

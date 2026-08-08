@@ -12,7 +12,14 @@ from tests.conftest import book
 def test_store_writes_a_seed_file_on_first_use(store: Store) -> None:
     assert store.path.exists()
     payload = json.loads(store.path.read_text(encoding="utf-8"))
-    assert set(payload) == {"providers", "patients", "visitTypes", "slots", "appointments"}
+    assert set(payload) == {
+        "providers",
+        "patients",
+        "visitTypes",
+        "slots",
+        "appointments",
+        "prescriptions",
+    }
     assert payload["providers"][0]["locationName"] == "Pulse Health Downtown"
 
 

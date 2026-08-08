@@ -176,12 +176,50 @@ class VerifyIdentityResponse(ApiModel):
     insurance_member_id: str
 
 
+class PrescriptionStatus(StrEnum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class PrescriptionRecord(ApiModel):
+    """What is persisted: no embedded provider, so nothing can go stale on disk."""
+
+    id: str
+    provider_id: str
+    medication_name: str
+    dosage: str
+    frequency: str
+    instructions: str
+    status: PrescriptionStatus
+    refills_remaining: int
+    last_filled_at: UtcDateTime
+    created_at: UtcDateTime
+    updated_at: UtcDateTime
+
+
+class Prescription(ApiModel):
+    id: str
+    provider_id: str
+    provider: ProviderSummary
+    medication_name: str
+    dosage: str
+    frequency: str
+    instructions: str
+    status: PrescriptionStatus
+    refills_remaining: int
+    last_filled_at: UtcDateTime
+    created_at: UtcDateTime
+    updated_at: UtcDateTime
+
+
 class StoreData(ApiModel):
     providers: list[Provider]
     patients: list[Patient]
     visit_types: list[VisitType]
     slots: list[Slot]
     appointments: list[AppointmentRecord]
+    prescriptions: list[PrescriptionRecord]
 
 
 class CreateAppointmentRequest(ApiModel):
