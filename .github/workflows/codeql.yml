@@ -21,7 +21,7 @@ jobs:
       matrix:
         language: [python, javascript-typescript]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # No root npm workspace exists (the frontend has its own package-lock.json), so
       # CodeQL's JS/TS autobuild has nothing to build against and would otherwise only get
@@ -29,7 +29,7 @@ jobs:
       # node_modules before the JS/TS analyze step lets the extractor resolve imports and
       # types properly; it's a no-op for the python matrix leg since only .py sources exist
       # for that language pass.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: matrix.language == 'javascript-typescript'
         with:
           node-version-file: .nvmrc
@@ -39,13 +39,13 @@ jobs:
         run: |
           npm ci --prefix apps/portal-angular
 
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
 
       # No compiled build step for either language: Python needs none, and JS/TS analysis
       # runs CodeQL's no-build extraction over the checked-out source (now with
       # node_modules present for import resolution) rather than an explicit autobuild.
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
         with:
           category: '/language:${{ matrix.language }}'
