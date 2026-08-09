@@ -162,6 +162,12 @@ app. Its datedness is the point.
   image, Chrome's shared libraries may need installing before specs can run at all.
 - **The Python venv stores absolute paths.** Moving or renaming the repo directory breaks it.
   Re-run `npm run setup:api`.
+- **`python3` is not necessarily Python 3.12.** macOS still ships 3.9 as `/usr/bin/python3`, and
+  `apps/mock-api` requires 3.12+, so a venv built from a bare `python3` fails every dependency
+  install with `Could not find a version that satisfies the requirement fastapi==...` — a message
+  that never mentions the interpreter. `npm run setup:api` picks the newest qualifying interpreter
+  on `PATH` and recreates a venv that was built with an older one; `PYTHON=/path/to/python3`
+  overrides the search. CI never sees this, because `setup-python` pins 3.12 there.
 - **Seed data ages.** Appointments are seeded relative to the current time, so an untouched store
   drifts from upcoming into past over days. If the app looks wrong, run `npm run reset:data`
   before debugging anything.

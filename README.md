@@ -69,7 +69,8 @@ pulse-health/
 ## Prerequisites
 
 - Node.js 22+ and npm
-- Python 3.12+ with `python3-venv`
+- Python 3.12+ with `python3-venv` (it does not have to be your default `python3` — see
+  [Setup](#setup))
 - Karma runs headless Chrome, downloaded automatically by the `puppeteer` devDependency. On a
   bare Linux host Chrome also needs system libraries:
 
@@ -84,6 +85,14 @@ pulse-health/
 ```bash
 npm install     # root tooling (concurrently)
 npm run setup   # backend venv + Angular dependencies
+```
+
+`npm run setup:api` looks for a Python that satisfies `apps/mock-api/pyproject.toml` rather than
+trusting whatever `python3` resolves to — on macOS that is still 3.9, which cannot install the
+pinned dependencies. Point it at a specific interpreter if you have several:
+
+```bash
+PYTHON=/opt/homebrew/bin/python3.13 npm run setup:api
 ```
 
 ## Root commands

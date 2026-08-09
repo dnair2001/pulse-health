@@ -5,7 +5,7 @@
   "description": "Pulse Health patient portal: Angular app and a mock HTTP API",
   "scripts": {
     "setup": "npm run setup:api && npm run setup:angular && npm run setup:e2e",
-    "setup:api": "cd apps/mock-api && python3 -m venv .venv && .venv/bin/pip install --upgrade pip --quiet && .venv/bin/pip install -r requirements-dev.txt",
+    "setup:api": "node scripts/setup-api.mjs",
     "setup:angular": "npm --prefix apps/portal-angular install",
     "setup:e2e": "npm --prefix e2e install && npm --prefix e2e run setup",
     "setup:hooks": "apps/mock-api/.venv/bin/pre-commit install",

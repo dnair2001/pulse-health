@@ -7,7 +7,9 @@ is only the short version.
 ## Setup
 
 Requires Node 22+ and Python 3.12+. A `.devcontainer/devcontainer.json` is provided if you'd
-rather build in a container than install these locally.
+rather build in a container than install these locally. `npm run setup` searches `PATH` for an
+interpreter that meets the Python floor instead of assuming `python3` is one, so it also works on
+machines whose `python3` is older (macOS still ships 3.9).
 
 ```bash
 npm install     # root tooling
