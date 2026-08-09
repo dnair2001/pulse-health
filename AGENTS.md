@@ -10,18 +10,21 @@ migration can reuse verbatim:
 | --- | --- | --- |
 | `mock-api` | `apps/mock-api` | FastAPI, Python 3.12. Owns all business rules and the frozen contract. |
 | `portal-angular` | `apps/portal-angular` | Angular 17 with NgModules. The deliberately period-accurate legacy app. **Reference implementation.** |
+| `portal-react` | `apps/portal-react` | React 19 + Vite. The migration target, ported one feature slice at a time. |
 
-There is no React (or other modern-framework) frontend in this repo today. There was one
-previously — this repo's history shows a completed Angular-to-React migration — and it was
-removed to restore a genuine migration backlog for demoing that migration again. If you are
-asked to port `portal-angular` to another framework, treat `docs/api-contract.md` as the
-frozen spec to build against and see "Notes for the migration phase" in README.md.
+The React port is **in progress**: Provider Directory is ported, the other features are not.
+`portal-angular` stays complete and untouched throughout — it is the reference implementation and
+the before/after comparison, not dead code. When porting a slice, treat `docs/api-contract.md` as
+the frozen spec, reproduce the Angular app's observable behaviour exactly (see invariant 3), and
+reuse what is already in `apps/portal-react/src/shared` rather than re-implementing it per
+feature. `apps/portal-react/README.md` tracks what is ported and where the two apps differ on
+purpose.
 
 ## Setup
 
 ```bash
 npm install          # root tooling (concurrently, prettier)
-npm run setup        # python venv, Angular node_modules, Playwright chromium
+npm run setup        # python venv, both frontends' node_modules, Playwright chromium
 npm run setup:hooks  # optional: install the pre-commit hooks
 ```
 
@@ -34,22 +37,22 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | Both dev servers: API `:8000`, Angular `:4200` |
-| `npm test` | Unit suite: 170 pytest + 106 Karma = **276** |
-| `npm run test:e2e` | Builds, then runs the Playwright specs against the frontend |
-| `npm run lint` | ruff + Angular eslint, each including a complexity budget (see below) |
-| `npm run typecheck` | mypy (strict) + Angular tsc |
+| `npm start` | All three dev servers: API `:8000`, Angular `:4200`, React `:4300` |
+| `npm test` | Unit suite: 170 pytest + 106 Karma = **276**, plus React's Vitest suite |
+| `npm run test:e2e` | Builds, then runs the Playwright specs against the Angular frontend |
+| `npm run lint` | ruff + Angular eslint (each including a complexity budget, see below) + React oxlint |
+| `npm run typecheck` | mypy (strict) + Angular tsc + React tsc |
 | `npm run format` / `format:check` | Prettier over TS/JS/JSON/YAML |
-| `npm run build` | Production bundle |
-| `npm run demo` | Builds, then serves the frontend + API on `:8080` |
+| `npm run build` | Production bundles for both frontends |
+| `npm run demo` | Builds, then serves the Angular frontend + API on `:8080` |
 | `npm run reset:data` | Reseeds the mock API relative to now (needs the API running) |
 | `npm run generate:openapi` | Regenerates `apps/mock-api/openapi.json` from the live schema; CI fails if it's stale |
 | `npm run check:duplication` | jscpd duplicate-code budget across both apps (`.jscpd.json`) |
 | `npm run check:doc-freshness` | Confirms this file's/README's/CONTRIBUTING's/the PR template's documented test counts still match the live suites |
 
-The frontend proxies `/api` to `localhost:8000`, so the API must be running to show data.
-Per-app variants exist for tight loops: `test:api`, `test:angular`, and the same pattern for
-`lint:`, `typecheck:` and `build:`.
+Both frontends proxy `/api` to `localhost:8000`, so the API must be running to show data.
+Per-app variants exist for tight loops: `test:api`, `test:angular`, `test:react`, and the same
+pattern for `setup:`, `start:`, `lint:`, `typecheck:` and `build:`.
 
 `npm run test:e2e` is deliberately **not** part of `npm test`: it needs a production build first,
 and keeping the unit suite fast matters more than a single entry point.
@@ -74,7 +77,13 @@ number, so they catch new regressions without demanding an unrelated rewrite to 
   false-positives — Angular schematics/template-parser/puppeteer — that knip's static import
   graph can't see).
 - **Duplicate code** — `jscpd` at the root (`.jscpd.json`, `npm run check:duplication`), scanning
-  both apps' source.
+  `mock-api` and `portal-angular`. `portal-react` is deliberately **out** of scope: a port
+  re-expresses the reference app's error envelope, models and markup on purpose, so every ported
+  file registers as a cross-app clone (measured: adding it moves the total from 2.66% to 2.99%
+  against a 3% threshold, entirely from `api-error.model.ts` and `api-error.interceptor.ts`).
+  Including it would mean either failing the budget for doing the port correctly or raising the
+  threshold until it stops catching real copy-paste in the Angular app. The gap is that
+  `portal-react` has no intra-app duplication budget yet.
 
 All of the above run in CI (see `.github/workflows/ci.yml`'s `api`/`angular`/`quality` jobs) and
 as local pre-commit hooks.
@@ -116,7 +125,12 @@ Breaking any of these is a defect, not a style preference.
    not a framework-idiomatic reinterpretation of it. When this repo previously had a React port,
    this was mechanically enforced by an equivalence spec that diffed the two frontends' rendered
    text (`e2e/tests/equivalence.spec.ts`, now removed along with the React app); recreate an
-   equivalent check for whatever framework replaces it next.
+   equivalent check for whatever framework replaces it next. **Still outstanding for the current
+   port:** the e2e suite drives Angular only, because `demo_server.py` serves one bundle and a
+   port that adds a second implementation to `IMPLEMENTATIONS` has to mount it there too.
+   The one intentional divergence so far is the Provider Directory `bio` field, which React
+   renders as escaped text rather than reproducing Angular's `bypassSecurityTrustHtml` +
+   `[innerHTML]` stored XSS — a bug is not behaviour worth preserving.
 
 ## Per-app conventions
 
@@ -154,6 +168,15 @@ one implementation currently in the repo and resets API state around each test. 
 `loadChildren`, class-based HTTP interceptor, Reactive Forms, `ControlValueAccessor`. Component and
 directive selectors **must** use the `ph-` prefix; eslint fails otherwise. Do not modernize this
 app. Its datedness is the point.
+
+**`apps/portal-react`** — Vite + React 19, TanStack Query for server state, oxlint, Vitest +
+React Testing Library in jsdom (`src/test/setup.ts` stubs `fetch` per test, so no suite can reach
+the network). One feature per directory under `src/features`, each lazily imported in `App.tsx` so
+it gets its own bundle chunk, mirroring Angular's `loadChildren`. `src/styles/global.scss` is
+`portal-angular`'s stylesheet verbatim plus its shell block — edit the Angular file, then copy,
+so the two apps cannot drift visually. Keep the Angular templates' `data-testid` values and class
+names: the e2e specs and the equivalence check both key off them. `bio`-style free text renders
+as JSX text; `dangerouslySetInnerHTML` is banned by `.oxlintrc.json` (`react/no-danger`).
 
 ## Gotchas that have cost real time
 

@@ -89,14 +89,24 @@ repos:
 
       - id: knip-angular
         name: knip (portal-angular dead code)
-        # Same reason as knip-react above: knip needs to run from the app directory.
+        # Whole-app check, same reason as mypy and vulture above: knip needs the whole import
+        # graph, and it resolves knip.json relative to the app directory.
         entry: bash -c 'cd apps/portal-angular && node_modules/.bin/knip'
         language: system
         pass_filenames: false
         files: ^apps/portal-angular/(src/.*\.ts|package\.json)$
 
+      - id: oxlint-react
+        name: oxlint (portal-react)
+        # oxlint resolves .oxlintrc.json from its working directory, so this runs from the app
+        # directory over the whole of src rather than over the staged file list.
+        entry: bash -c 'cd apps/portal-react && node_modules/.bin/oxlint src'
+        language: system
+        pass_filenames: false
+        files: ^apps/portal-react/(src/.*\.tsx?|\.oxlintrc\.json)$
+
       - id: jscpd
-        name: jscpd (duplicate code, both apps)
+        name: jscpd (duplicate code, mock-api + portal-angular)
         entry: node_modules/.bin/jscpd -c .jscpd.json
         language: system
         pass_filenames: false

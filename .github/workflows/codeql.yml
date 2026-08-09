@@ -23,9 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # No root npm workspace exists (the frontend has its own package-lock.json), so
+      # No root npm workspace exists (each frontend has its own package-lock.json), so
       # CodeQL's JS/TS autobuild has nothing to build against and would otherwise only get
-      # partial type information from source text alone. Installing the frontend's
+      # partial type information from source text alone. Installing both frontends'
       # node_modules before the JS/TS analyze step lets the extractor resolve imports and
       # types properly; it's a no-op for the python matrix leg since only .py sources exist
       # for that language pass.
@@ -38,6 +38,7 @@ jobs:
         if: matrix.language == 'javascript-typescript'
         run: |
           npm ci --prefix apps/portal-angular
+          npm ci --prefix apps/portal-react
 
       - uses: github/codeql-action/init@v3
         with:

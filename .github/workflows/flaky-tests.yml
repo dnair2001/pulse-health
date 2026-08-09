@@ -64,3 +64,23 @@ jobs:
         env:
           CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
         run: bash "$GITHUB_WORKSPACE/.github/scripts/run-thrice.sh" "portal-angular (karma)" npm run test:ci
+
+  react:
+    name: portal-react x3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/portal-react/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/portal-react
+        run: npm ci
+
+      - name: Run Vitest three times
+        working-directory: apps/portal-react
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/run-thrice.sh" "portal-react (vitest)" npm run test:ci

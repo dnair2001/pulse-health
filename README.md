@@ -8,12 +8,17 @@ Medications, and Billing & Insurance Claims.
 | App | What it is |
 | --- | --- |
 | `apps/portal-angular` | the legacy baseline: Angular 17 NgModules, RxJS, Karma |
-| `apps/mock-api` | FastAPI mock backing it |
+| `apps/portal-react` | the in-progress React 19 port, one feature slice at a time |
+| `apps/mock-api` | FastAPI mock backing both |
 
 The REST contract in [`docs/api-contract.md`](docs/api-contract.md) is frozen — it is written so
-that a future migration to another frontend framework requires no backend change. `data-testid`
-attributes are already in place on the elements a UI test would target, so behavioural tests can
-be ported alongside the components when that migration happens.
+that migrating to another frontend framework requires no backend change, and the React port
+consumes it unchanged. `data-testid` attributes are in place on the elements a UI test would
+target, so behavioural tests port alongside the components.
+
+The React app currently covers **Provider Directory** only; the Angular app remains the complete
+reference implementation. See [`apps/portal-react/README.md`](apps/portal-react/README.md) for
+what is ported, how each Angular pattern maps, and where the two apps differ on purpose.
 
 ## Stack
 
@@ -55,6 +60,14 @@ pulse-health/
 │   │           ├── patient-profile/ demographics, contact-info edit, identity verification
 │   │           ├── prescriptions/   list, filter, refill request
 │   │           └── billing/         invoices, payments
+│   ├── portal-react/            React 19 port (Vite, TanStack Query, Vitest)
+│   │   ├── vite.config.ts       :4300, /api -> localhost:8000, Vitest config
+│   │   └── src/
+│   │       ├── api/             types, fetch wrapper, endpoints, query hooks
+│   │       ├── shared/          primitives ported from Angular's shared/components
+│   │       ├── styles/          the Angular stylesheet, verbatim
+│   │       └── features/
+│   │           └── providers/       provider directory + profile pages
 │   └── mock-api/                FastAPI mock
 │       ├── app/domain/          models, rules, error envelope
 │       ├── app/api/             health, providers, patients, visit types, slots, appointments,
@@ -83,23 +96,24 @@ pulse-health/
 
 ```bash
 npm install     # root tooling (concurrently)
-npm run setup   # backend venv + Angular dependencies
+npm run setup   # backend venv + both frontends' dependencies
 ```
 
 ## Root commands
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | both: API on :8000, Angular on :4200 |
+| `npm start` | all three: API on :8000, Angular on :4200, React on :4300 |
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
 | `npm run start:angular` | `ng serve`, http://localhost:4200 |
-| `npm test` | both unit suites (170 + 106 = 276 tests) |
-| `npm run test:api` / `test:angular` | one suite only |
-| `npm run test:e2e` | Playwright specs driving the frontend in a real browser |
-| `npm run lint` | ruff, then eslint |
-| `npm run typecheck` | mypy (strict), then Angular tsc |
+| `npm run start:react` | `vite`, http://localhost:4300 |
+| `npm test` | every unit suite (170 + 106 = 276 tests, plus the React suite) |
+| `npm run test:api` / `test:angular` / `test:react` | one suite only |
+| `npm run test:e2e` | Playwright specs driving the Angular frontend in a real browser |
+| `npm run lint` | ruff, then eslint, then oxlint |
+| `npm run typecheck` | mypy (strict), then Angular tsc, then React tsc |
 | `npm run format` | Prettier over TS/JS/JSON/YAML |
-| `npm run build` | production bundle |
+| `npm run build` | production bundles for both frontends |
 | `npm run demo` | build the frontend and serve it with the API on one port |
 | `npm run reset:data` | reseed the API store while it is running |
 
@@ -243,6 +257,12 @@ npm test
   feature page: appointments (list, schedule, reschedule), the provider directory and profile,
   patient profile (edit, identity verification), prescriptions (tabs, refill), billing (tabs,
   payment), and the dashboard's cross-feature summary.
+- **React, 49 tests (Vitest + React Testing Library).** The fetch wrapper's error normalisation
+  and the endpoints' URLs, the query hooks including the disabled-without-an-id case, the shared
+  primitives, the app shell's redirects, and both provider pages driven through the DOM: loading,
+  populated, search by name and by specialty, both empty states, retry after a network failure,
+  server error, not-found, and a regression test asserting a script-bearing `bio` renders as
+  inert text.
 
 ```bash
 npm run test:e2e
@@ -255,8 +275,10 @@ npm run test:e2e
 
 ## Notes for the migration phase
 
-- The API is the contract. A React port should reuse `docs/api-contract.md` verbatim; no backend
-  change is required.
+- The API is the contract. The React port reuses `docs/api-contract.md` verbatim; no backend
+  change is required, and a slice that seems to need one has been ported wrong.
+- One feature slice at a time, in `apps/portal-react`. The Angular app stays in place as the
+  reference implementation and the before/after comparison; it is not deleted or refactored.
 - Deliberately legacy patterns a rewrite will have to address: NgModules and lazy `loadChildren`,
   `HttpClientModule` with a class-based `HttpInterceptor`, RxJS pipelines with manual
   `takeUntil` teardown, `ControlValueAccessor` form integration, template-driven `*ngIf`/`*ngFor`
