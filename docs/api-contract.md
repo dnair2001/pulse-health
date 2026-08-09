@@ -4,8 +4,8 @@ The mock HTTP API lives in `apps/mock-api` (FastAPI, Python 3.12). This contract
 **frozen**: field names, status codes and error codes below are what clients may rely on.
 
 ```bash
+npm run setup:api                              # builds apps/mock-api/.venv (needs Python 3.12+)
 cd apps/mock-api
-python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/uvicorn app.main:app --port 8000     # serves http://localhost:8000/api/...
 .venv/bin/pytest                               # test suite
 .venv/bin/ruff check .                         # lint
