@@ -9,7 +9,8 @@
     "test": "karma start karma.conf.js --single-run=false",
     "test:ci": "karma start karma.conf.js --single-run --browsers=ChromeHeadlessCI",
     "lint": "eslint \"src/**/*.js\"",
-    "lint:deadcode": "knip"
+    "lint:deadcode": "knip",
+    "typecheck": "echo 'No TypeScript in this app (AngularJS/plain JS) — nothing to typecheck.'"
   },
   "private": true,
   "dependencies": {

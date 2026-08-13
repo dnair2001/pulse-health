@@ -8,16 +8,21 @@ describe('phProviderProfilePage', () => {
 
   beforeEach(angular.mock.module('ngRoute', 'ngSanitize', 'portalApp.core', 'portalApp.providers'));
 
-  beforeEach(
-    inject((_$compile_, _$rootScope_, _$componentController_, _$httpBackend_, _$routeParams_, _$location_) => {
-      $compile = _$compile_;
-      $rootScope = _$rootScope_;
-      $componentController = _$componentController_;
-      $httpBackend = _$httpBackend_;
-      $routeParams = _$routeParams_;
-      $location = _$location_;
-    }),
-  );
+  beforeEach(inject((
+    _$compile_,
+    _$rootScope_,
+    _$componentController_,
+    _$httpBackend_,
+    _$routeParams_,
+    _$location_,
+  ) => {
+    $compile = _$compile_;
+    $rootScope = _$rootScope_;
+    $componentController = _$componentController_;
+    $httpBackend = _$httpBackend_;
+    $routeParams = _$routeParams_;
+    $location = _$location_;
+  }));
 
   afterEach(() => {
     $httpBackend.verifyNoOutstandingExpectation();
@@ -26,7 +31,12 @@ describe('phProviderProfilePage', () => {
 
   it('loads the provider named by the route id', () => {
     $routeParams.id = 'prv_002';
-    const provider = { id: 'prv_002', name: 'Dr. Marcus Bell', specialty: 'Dermatology', bio: 'Bio text.' };
+    const provider = {
+      id: 'prv_002',
+      name: 'Dr. Marcus Bell',
+      specialty: 'Dermatology',
+      bio: 'Bio text.',
+    };
     $httpBackend.expectGET('/api/providers/prv_002').respond(200, provider);
 
     const ctrl = $componentController('phProviderProfilePage');

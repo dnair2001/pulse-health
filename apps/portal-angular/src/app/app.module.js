@@ -6,7 +6,13 @@ import './features/providers/providers.module';
 import { AppRootComponent } from './app.component';
 
 angular
-  .module('portalApp', ['ngRoute', 'ngSanitize', 'portalApp.core', 'portalApp.shared', 'portalApp.providers'])
+  .module('portalApp', [
+    'ngRoute',
+    'ngSanitize',
+    'portalApp.core',
+    'portalApp.shared',
+    'portalApp.providers',
+  ])
   .component('phAppRoot', AppRootComponent)
   .config([
     '$locationProvider',
@@ -20,8 +26,12 @@ angular
     /** @param {angular.route.IRouteProvider} $routeProvider */
     ($routeProvider) => {
       $routeProvider
-        .when('/providers', { template: '<ph-provider-directory-page></ph-provider-directory-page>' })
-        .when('/providers/:id', { template: '<ph-provider-profile-page></ph-provider-profile-page>' })
+        .when('/providers', {
+          template: '<ph-provider-directory-page></ph-provider-directory-page>',
+        })
+        .when('/providers/:id', {
+          template: '<ph-provider-profile-page></ph-provider-profile-page>',
+        })
         .otherwise({ redirectTo: '/providers' });
     },
   ]);

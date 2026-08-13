@@ -101,12 +101,12 @@ PYTHON=/opt/homebrew/bin/python3.13 npm run setup:api
 | --- | --- |
 | `npm start` | both: API on :8000, Angular on :4200 |
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
-| `npm run start:angular` | `ng serve`, http://localhost:4200 |
-| `npm test` | both unit suites (170 + 106 = 276 tests) |
+| `npm run start:angular` | webpack dev server, http://localhost:4200 |
+| `npm test` | both unit suites (170 + 12 = 182 tests) |
 | `npm run test:api` / `test:angular` | one suite only |
 | `npm run test:e2e` | Playwright specs driving the frontend in a real browser |
 | `npm run lint` | ruff, then eslint |
-| `npm run typecheck` | mypy (strict), then Angular tsc |
+| `npm run typecheck` | mypy (strict); portal-angular is plain AngularJS/JS, so its typecheck step is a no-op |
 | `npm run format` | Prettier over TS/JS/JSON/YAML |
 | `npm run build` | production bundle |
 | `npm run demo` | build the frontend and serve it with the API on one port |

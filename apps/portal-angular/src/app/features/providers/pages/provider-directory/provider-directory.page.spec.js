@@ -5,13 +5,11 @@ describe('phProviderDirectoryPage', () => {
 
   beforeEach(angular.mock.module('portalApp.core', 'portalApp.providers'));
 
-  beforeEach(
-    inject((_$componentController_, _$httpBackend_, _$location_) => {
-      $componentController = _$componentController_;
-      $httpBackend = _$httpBackend_;
-      $location = _$location_;
-    }),
-  );
+  beforeEach(inject((_$componentController_, _$httpBackend_, _$location_) => {
+    $componentController = _$componentController_;
+    $httpBackend = _$httpBackend_;
+    $location = _$location_;
+  }));
 
   afterEach(() => {
     $httpBackend.verifyNoOutstandingExpectation();
@@ -72,9 +70,9 @@ describe('phProviderDirectoryPage', () => {
   });
 
   it('surfaces a friendly error and supports retrying', () => {
-    $httpBackend
-      .expectGET('/api/providers')
-      .respond(500, { error: { code: 'UNKNOWN', message: 'Providers are temporarily unavailable.' } });
+    $httpBackend.expectGET('/api/providers').respond(500, {
+      error: { code: 'UNKNOWN', message: 'Providers are temporarily unavailable.' },
+    });
 
     const ctrl = createController();
     ctrl.$onInit();

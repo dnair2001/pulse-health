@@ -4,12 +4,10 @@ describe('providerDirectoryService', () => {
 
   beforeEach(angular.mock.module('portalApp.providers'));
 
-  beforeEach(
-    inject((_providerDirectoryService_, _$httpBackend_) => {
-      providerDirectoryService = _providerDirectoryService_;
-      $httpBackend = _$httpBackend_;
-    }),
-  );
+  beforeEach(inject((_providerDirectoryService_, _$httpBackend_) => {
+    providerDirectoryService = _providerDirectoryService_;
+    $httpBackend = _$httpBackend_;
+  }));
 
   afterEach(() => {
     $httpBackend.verifyNoOutstandingExpectation();
