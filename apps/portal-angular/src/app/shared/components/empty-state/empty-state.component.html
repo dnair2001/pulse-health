@@ -1,13 +1,13 @@
 <div class="empty-state" data-testid="empty-state">
-  <h3 class="empty-state__title">{{ title }}</h3>
-  <p class="empty-state__message" *ngIf="message">{{ message }}</p>
+  <h3 class="empty-state__title">{{ $ctrl.title }}</h3>
+  <p class="empty-state__message" ng-if="$ctrl.message">{{ $ctrl.message }}</p>
   <button
     type="button"
     class="button button--primary"
-    *ngIf="actionLabel"
-    (click)="action.emit()"
+    ng-if="$ctrl.actionLabel"
+    ng-click="$ctrl.action()"
     data-testid="empty-state-action"
   >
-    {{ actionLabel }}
+    {{ $ctrl.actionLabel }}
   </button>
 </div>

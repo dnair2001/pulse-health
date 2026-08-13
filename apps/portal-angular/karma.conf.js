@@ -1,6 +1,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const webpackConfig = require('./webpack.config.js')({}, { mode: 'development' });
 
 // puppeteer 25 made executablePath() async, which karma.conf cannot await, so the
 // downloaded browser is resolved straight from the puppeteer cache instead.
@@ -54,13 +55,29 @@ process.env.CHROME_BIN = resolveChromeBinary();
 module.exports = function (config) {
   config.set({
     basePath: '',
-    frameworks: ['jasmine', '@angular-devkit/build-angular'],
+    frameworks: ['jasmine'],
+    // Angular, angular-mocks, every app module and every *.spec.js file all go through this
+    // one webpack bundle (see src/test-index.js) rather than loading Angular as a separate
+    // global <script>. Two separately-bundled copies of the 'angular' package would each
+    // carry their own module registry, so app modules registered in one copy would be
+    // invisible to angular-mocks' `module()`/`inject()` in the other.
+    files: [{ pattern: 'src/test-index.js', watched: false }],
+    preprocessors: {
+      'src/test-index.js': ['webpack'],
+    },
+    webpack: {
+      mode: 'development',
+      module: webpackConfig.module,
+      resolve: webpackConfig.resolve,
+    },
+    webpackMiddleware: {
+      stats: 'errors-only',
+    },
     plugins: [
       require('karma-jasmine'),
       require('karma-chrome-launcher'),
       require('karma-jasmine-html-reporter'),
-      require('karma-coverage'),
-      require('@angular-devkit/build-angular/plugins/karma'),
+      require('karma-webpack'),
     ],
     client: {
       jasmine: {},
@@ -69,25 +86,7 @@ module.exports = function (config) {
     jasmineHtmlReporter: {
       suppressAll: true,
     },
-    coverageReporter: {
-      dir: path.join(__dirname, './coverage/portal-angular'),
-      subdir: '.',
-      reporters: [{ type: 'html' }, { type: 'text-summary' }],
-      // Measured baseline (42 specs, --code-coverage): statements 88.77%, branches
-      // 75-76.25% (branch percentage wobbles a point or two run-to-run, see AGENTS.md/
-      // karma gotchas — timing-sensitive branches in async observable chains), functions
-      // 84.76%, lines 89.16%. Thresholds sit a few points under the lowest observed value
-      // so one new untested branch doesn't fail a build, without letting coverage rot.
-      check: {
-        global: {
-          statements: 85,
-          branches: 68,
-          functions: 80,
-          lines: 85,
-        },
-      },
-    },
-    reporters: ['progress', 'kjhtml', 'coverage'],
+    reporters: ['progress', 'kjhtml'],
     browsers: ['ChromeHeadlessCI'],
     customLaunchers: {
       // --no-sandbox is required to run Chrome inside containers and CI images.

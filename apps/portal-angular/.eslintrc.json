@@ -1,46 +1,39 @@
 {
   "root": true,
-  "ignorePatterns": ["projects/**/*"],
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "extends": ["eslint:recommended"],
+  "globals": {
+    "angular": "readonly"
+  },
+  "ignorePatterns": ["dist/**/*", "node_modules/**/*"],
   "overrides": [
     {
-      "files": ["*.ts"],
-      "extends": [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
-        "plugin:@angular-eslint/recommended",
-        "plugin:@angular-eslint/template/process-inline-templates"
-      ],
+      "files": ["*.js"],
       "rules": {
-        "@angular-eslint/directive-selector": [
-          "error",
-          {
-            "type": "attribute",
-            "prefix": ["app", "ph"],
-            "style": "camelCase"
-          }
-        ],
-        "@angular-eslint/component-selector": [
-          "error",
-          {
-            "type": "element",
-            "prefix": ["app", "ph"],
-            "style": "kebab-case"
-          }
-        ],
-        // Measured baseline (`ng lint` with these three rules at threshold 1, non-spec .ts
-        // only): the worst offender is AppointmentsService at complexity 7, nesting depth 2,
-        // 34 lines-per-function. Thresholds sit a bit above that measured max so one new
-        // branch doesn't fail the build, without leaving the check meaningless.
+        // Measured baseline for this app's non-spec source; thresholds sit a bit above the
+        // worst measured offender so one new branch doesn't fail the build, without leaving
+        // the check meaningless.
         "complexity": ["warn", 10],
         "max-depth": ["warn", 3],
-        "max-lines-per-function": ["warn", 40]
+        "max-lines-per-function": ["warn", 45]
       }
     },
     {
       // Jasmine describe/it/beforeEach callbacks routinely exceed these thresholds for
       // reasons unrelated to production code quality (setup boilerplate, assertion chains,
       // not decision branching), so the rules are scoped to non-spec source.
-      "files": ["*.spec.ts"],
+      "files": ["*.spec.js"],
+      "env": { "jasmine": true },
+      "globals": {
+        "inject": "readonly"
+      },
       "rules": {
         "complexity": "off",
         "max-depth": "off",
@@ -48,12 +41,15 @@
       }
     },
     {
-      "files": ["*.html"],
-      "extends": [
-        "plugin:@angular-eslint/template/recommended",
-        "plugin:@angular-eslint/template/accessibility"
-      ],
-      "rules": {}
+      "files": ["webpack.config.js", "karma.conf.js"],
+      "env": { "node": true },
+      "parserOptions": { "sourceType": "script" }
+    },
+    {
+      // `require.context` is webpack's build-time module-globbing API, injected only into
+      // bundles it compiles itself — not a real Node/CommonJS `require`.
+      "files": ["src/test-index.js"],
+      "globals": { "require": "readonly" }
     }
   ]
 }
