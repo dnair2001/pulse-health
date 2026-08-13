@@ -1,31 +1,25 @@
-<div class="dialog-backdrop" *ngIf="open">
-  <div
-    class="dialog"
-    role="dialog"
-    aria-modal="true"
-    [attr.aria-label]="title"
-    data-testid="confirm-dialog"
-  >
-    <h2 class="dialog__title">{{ title }}</h2>
-    <p class="dialog__message" *ngIf="message">{{ message }}</p>
+<div class="dialog-backdrop" ng-if="$ctrl.open">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="{{ $ctrl.title }}" data-testid="confirm-dialog">
+    <h2 class="dialog__title">{{ $ctrl.title }}</h2>
+    <p class="dialog__message" ng-if="$ctrl.message">{{ $ctrl.message }}</p>
     <div class="dialog__actions">
       <button
         type="button"
         class="button button--ghost"
-        [disabled]="busy"
-        (click)="cancelled.emit()"
+        ng-disabled="$ctrl.busy"
+        ng-click="$ctrl.cancelled()"
         data-testid="confirm-cancel"
       >
-        {{ cancelLabel }}
+        {{ $ctrl.cancelLabel }}
       </button>
       <button
         type="button"
         class="button button--danger"
-        [disabled]="busy"
-        (click)="confirmed.emit()"
+        ng-disabled="$ctrl.busy"
+        ng-click="$ctrl.confirmed()"
         data-testid="confirm-accept"
       >
-        {{ busy ? 'Working…' : confirmLabel }}
+        {{ $ctrl.busy ? 'Working…' : $ctrl.confirmLabel }}
       </button>
     </div>
   </div>

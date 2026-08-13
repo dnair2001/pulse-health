@@ -35,10 +35,10 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 | Command | What it does |
 | --- | --- |
 | `npm start` | Both dev servers: API `:8000`, Angular `:4200` |
-| `npm test` | Unit suite: 170 pytest + 106 Karma = **276** |
+| `npm test` | Unit suite: 170 pytest + 12 Karma = **182** |
 | `npm run test:e2e` | Builds, then runs the Playwright specs against the frontend |
 | `npm run lint` | ruff + Angular eslint, each including a complexity budget (see below) |
-| `npm run typecheck` | mypy (strict) + Angular tsc |
+| `npm run typecheck` | mypy (strict) + no-op for portal-angular (plain AngularJS/JS, no TS) |
 | `npm run format` / `format:check` | Prettier over TS/JS/JSON/YAML |
 | `npm run build` | Production bundle |
 | `npm run demo` | Builds, then serves the frontend + API on `:8080` |

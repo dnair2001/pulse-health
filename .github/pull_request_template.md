@@ -12,7 +12,7 @@ Definition of done (see [AGENTS.md](../AGENTS.md)):
 
 - [ ] `npm run lint` passes
 - [ ] `npm run typecheck` and `npm run format:check` pass
-- [ ] `npm test` passes (170 pytest + 106 Karma = 276)
+- [ ] `npm test` passes (170 pytest + 12 Karma = 182)
 - [ ] `npm run build` passes
 - [ ] `npm run check:duplication` and `npm run check:doc-freshness` pass
 

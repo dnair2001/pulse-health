@@ -1,11 +1,16 @@
-<div [class]="cssClass" [attr.role]="role" [attr.data-variant]="variant" data-testid="alert-banner">
-  <span class="alert__message">{{ message }}</span>
+<div
+  ng-class="$ctrl.cssClass"
+  role="{{ $ctrl.role }}"
+  data-variant="{{ $ctrl.variant }}"
+  data-testid="alert-banner"
+>
+  <span class="alert__message">{{ $ctrl.message }}</span>
   <button
     type="button"
     class="alert__dismiss"
-    *ngIf="dismissible"
+    ng-if="$ctrl.dismissible"
     aria-label="Dismiss"
-    (click)="dismissed.emit()"
+    ng-click="$ctrl.dismissed()"
   >
     ×
   </button>

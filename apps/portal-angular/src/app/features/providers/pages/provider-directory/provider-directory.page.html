@@ -10,38 +10,41 @@
     <span class="field__label">Search by name or specialty</span>
     <input
       type="search"
-      [(ngModel)]="search"
+      ng-model="$ctrl.search"
       placeholder="e.g. Dermatology"
       data-testid="provider-search"
     />
   </label>
 
-  <ph-loading-spinner *ngIf="loading" message="Loading providers…"></ph-loading-spinner>
+  <ph-loading-spinner ng-if="$ctrl.loading" message="Loading providers…"></ph-loading-spinner>
 
-  <div class="stack" *ngIf="error && !loading">
+  <div class="stack" ng-if="$ctrl.error && !$ctrl.loading">
     <ph-alert-banner
-      [variant]="'error'"
-      [message]="error.message"
-      [dismissible]="false"
+      variant="error"
+      message="{{ $ctrl.error.message }}"
+      dismissible="false"
     ></ph-alert-banner>
-    <button type="button" class="button button--ghost" (click)="load()" data-testid="retry">
+    <button type="button" class="button button--ghost" ng-click="$ctrl.load()" data-testid="retry">
       Try again
     </button>
   </div>
 
   <ph-empty-state
-    *ngIf="isEmpty"
+    ng-if="$ctrl.isEmpty"
     title="No providers match your search"
     message="Try a different name or specialty."
   ></ph-empty-state>
 
-  <div class="provider-grid" *ngIf="!loading && !error && filteredProviders.length > 0">
+  <div
+    class="provider-grid"
+    ng-if="!$ctrl.loading && !$ctrl.error && $ctrl.filteredProviders.length > 0"
+  >
     <button
       type="button"
       class="card provider-card"
-      *ngFor="let provider of filteredProviders"
-      (click)="viewProfile(provider)"
-      [attr.data-testid]="'provider-card-' + provider.id"
+      ng-repeat="provider in $ctrl.filteredProviders"
+      ng-click="$ctrl.viewProfile(provider)"
+      data-testid="provider-card-{{ provider.id }}"
     >
       <h2 class="card__title">{{ provider.name }}</h2>
       <p class="provider-card__specialty">{{ provider.specialty }}, {{ provider.credentials }}</p>
