@@ -1,10 +1,11 @@
-import { Component, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
 import { ApiError } from '../../../../core/http/api-error';
 import { AlertBannerComponent } from '../../../../shared/components/alert-banner/alert-banner.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { toBioHtml } from '../../bio-html';
 import { Provider } from '../../models/provider';
 import { ProviderDirectoryService } from '../../services/provider-directory.service';
 
@@ -25,6 +26,9 @@ export class ProviderProfilePage implements OnInit {
   readonly provider = signal<Provider | null>(null);
   readonly loading = signal(false);
   readonly error = signal<ApiError | null>(null);
+
+  /** See toBioHtml: narrows the bio before Angular's sanitizer, never instead of it. */
+  readonly bioHtml = computed(() => toBioHtml(this.provider()?.bio));
 
   ngOnInit(): void {
     const id = this.id();

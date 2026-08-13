@@ -125,7 +125,7 @@ PYTHON=/opt/homebrew/bin/python3.13 npm run setup:api
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
 | `npm run start:angular` | webpack dev server, http://localhost:4200 |
 | `npm run start:angular-v22` | Angular CLI dev server, http://localhost:4201 |
-| `npm test` | all three unit suites (170 + 12 + 22 = 204 tests) |
+| `npm test` | all three unit suites (170 + 12 + 30 = 212 tests) |
 | `npm run test:api` / `test:angular` / `test:angular-v22` | one suite only |
 | `npm run test:e2e` | Playwright specs driving the AngularJS frontend in a real browser |
 | `npm run lint` | ruff, then eslint for both frontends |
@@ -219,12 +219,13 @@ npm test
   against an XSS payload in the bio field and asserts the sanitizer strips it. Scoped to the one
   feature currently wired into the app; the ~94 specs that covered the removed features were
   deleted along with them, not ported.
-- **Angular 22, 22 tests.** The same ground, rendered rather than controller-level: the API client
+- **Angular 22, 30 tests.** The same ground, rendered rather than controller-level: the API client
   (list, get by id, correlation-id header and its non-secure-context fallback, and the error
   envelope / unreachable-API / non-envelope mappings the interceptor performs), the directory page
   (loading, populated, filtered, empty, error-and-retry, navigation) and the profile page
   (loading, populated, not-found, server error, back) — including the same XSS regression,
-  asserting an `<img onerror=…>` bio renders inert.
+  asserting an `<img onerror=…>` bio renders inert, plus the bio-narrowing unit tests that pin
+  what a bio may contain: formatting in, media and attributes out.
 
 ```bash
 npm run test:e2e

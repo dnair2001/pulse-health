@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Keeps the "170 pytest + 12 Karma + 22 Vitest = 204" claim in AGENTS.md, README.md,
+// Keeps the "170 pytest + 12 Karma + 30 Vitest = 212" claim in AGENTS.md, README.md,
 // CONTRIBUTING.md and .github/pull_request_template.md honest, the same way
 // apps/mock-api/scripts/generate_openapi.py + the CI diff check keep openapi.json honest:
 // this recomputes the live numbers and fails loudly, with a clear diff, the moment any of
@@ -80,7 +80,7 @@ function countVitest() {
   } catch (err) {
     output = stripAnsi((err.stdout ?? '') + (err.stderr ?? ''));
   }
-  // "Tests  22 passed (22)" when green, "Tests  1 failed | 21 passed (22)" when not: the
+  // "Tests  30 passed (30)" when green, "Tests  1 failed | 29 passed (30)" when not: the
   // parenthesised number is the total either way, which is what the docs quote.
   const match = output.match(/Tests\s+[^\n]*\((\d+)\)/);
   if (!match) {
@@ -92,9 +92,9 @@ function countVitest() {
 }
 
 // Matches every documented variant seen in this repo:
-//   "170 pytest + 12 Karma + 22 Vitest = 204"
-//   "170 pytest + 12 Karma + 22 Vitest = **204**"   (AGENTS.md's markdown bold)
-//   "170 + 12 + 22 = 204 tests"                      (README.md's terser phrasing)
+//   "170 pytest + 12 Karma + 30 Vitest = 212"
+//   "170 pytest + 12 Karma + 30 Vitest = **212**"   (AGENTS.md's markdown bold)
+//   "170 + 12 + 30 = 212 tests"                      (README.md's terser phrasing)
 const COUNT_PATTERN =
   /(\d+)\s*(?:pytest)?\s*\+\s*(\d+)\s*(?:Karma)?\s*\+\s*(\d+)\s*(?:Vitest)?\s*=\s*\*{0,2}(\d+)\*{0,2}/;
 

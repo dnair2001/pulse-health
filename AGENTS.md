@@ -37,7 +37,7 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 | Command | What it does |
 | --- | --- |
 | `npm start` | All three dev servers: API `:8000`, AngularJS `:4200`, Angular 22 `:4201` |
-| `npm test` | Unit suite: 170 pytest + 12 Karma + 22 Vitest = **204** |
+| `npm test` | Unit suite: 170 pytest + 12 Karma + 30 Vitest = **212** |
 | `npm run test:e2e` | Builds, then runs the Playwright specs against the AngularJS frontend |
 | `npm run lint` | ruff + eslint for both frontends, each including a complexity budget (see below) |
 | `npm run typecheck` | mypy (strict) + `tsc --noEmit` over portal-angular-v22 + a no-op for portal-angular (plain AngularJS/JS, no TS) |
@@ -129,9 +129,15 @@ Breaking any of these is a defect, not a style preference.
 4. **The provider `bio` is never trusted markup.** It is care-coordinator-authored HTML from an
    unvetted internal tool, and rendering it through a trust-bypass API is the stored-XSS bug this
    app already shipped once. `portal-angular` renders it with `ng-bind-html` + `ngSanitize`;
-   `portal-angular-v22` renders it with `[innerHTML]` through Angular's built-in sanitizer.
-   Neither may call `$sce.trustAsHtml` or `DomSanitizer.bypassSecurityTrust*` on it, and both
-   have a regression spec that asserts an `<img onerror=…>` payload renders inert.
+   `portal-angular-v22` narrows it with `toBioHtml()` and then renders it with `[innerHTML]`
+   through Angular's built-in sanitizer. Neither may call `$sce.trustAsHtml` or
+   `DomSanitizer.bypassSecurityTrust*` on it, and both have a regression spec that asserts an
+   `<img onerror=…>` payload renders inert. `toBioHtml()` exists because a sanitizer allowlist is
+   not an image-source policy: both sanitizers keep `img`/`picture`/`source` and neither
+   URL-checks `srcset` (CVE-2024-8372, CVE-2024-8373), so a bio could otherwise make a patient's
+   browser fetch an attacker-chosen image. It removes markup only — it is a narrower gate in
+   front of the sanitizer, never a replacement for it — and `index.html`'s
+   `img-src 'self' data:` backs it up in the browser.
 
 ## Per-app conventions
 

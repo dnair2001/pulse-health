@@ -23,7 +23,7 @@ Always use the root scripts rather than per-app invocations.
 | Command | What it does |
 | --- | --- |
 | `npm start` | All three dev servers: API `:8000`, AngularJS `:4200`, Angular 22 `:4201` |
-| `npm test` | Full suite: 170 pytest + 12 Karma + 22 Vitest = 204 |
+| `npm test` | Full suite: 170 pytest + 12 Karma + 30 Vitest = 212 |
 | `npm run lint` | ruff + eslint for both frontends (includes a complexity budget — see AGENTS.md) |
 | `npm run build` | Production bundle for both frontends |
 | `npm run demo` | Builds, then serves the AngularJS frontend + API on `:8080` |

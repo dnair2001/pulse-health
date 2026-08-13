@@ -128,14 +128,36 @@ describe('ProviderProfilePage', () => {
 
     httpMock.expectOne('/api/providers/prv_002').flush({
       ...PROVIDER,
-      bio: 'Safe text. <img src="x" onerror="window.__pwned = true">',
+      bio: 'Safe text. <b>Bold.</b> <img src="x" onerror="window.__pwned = true">',
     } satisfies Provider);
     await fixture.whenStable();
 
     const bio = testId('provider-bio');
     expect(bio?.textContent).toContain('Safe text.');
-    expect(bio?.innerHTML).toContain('<img src="x">');
+    expect(bio?.innerHTML).toContain('<b>Bold.</b>');
     expect(bio?.innerHTML).not.toContain('onerror');
     expect((window as unknown as { __pwned?: boolean }).__pwned).toBeUndefined();
+  });
+
+  // A bio must not be able to make a patient's browser fetch an attacker-chosen image
+  // (tracking, content spoofing). See toBioHtml, and CVE-2024-8372 / CVE-2024-8373 for the
+  // sanitizer gap this closes.
+  it('renders no external image reference from a bio', async () => {
+    await loadRoute('prv_002');
+
+    httpMock.expectOne('/api/providers/prv_002').flush({
+      ...PROVIDER,
+      bio:
+        'Board-certified. <img src="https://attacker.example/p.png" ' +
+        'srcset="https://attacker.example/2x.png 2x">' +
+        '<picture><source srcset="https://attacker.example/s.png"></picture> Riverside.',
+    } satisfies Provider);
+    await fixture.whenStable();
+
+    const bio = testId('provider-bio');
+    expect(bio?.textContent).toContain('Board-certified.');
+    expect(bio?.textContent).toContain('Riverside.');
+    expect(bio?.querySelectorAll('img, picture, source')).toHaveLength(0);
+    expect(bio?.innerHTML).not.toContain('attacker.example');
   });
 });

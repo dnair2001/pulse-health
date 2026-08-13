@@ -20,14 +20,15 @@
         <!--
           Bios come from the internal onboarding tool and may contain basic formatting
           (<strong>, <br>) that plain interpolation would render as literal tags instead of
-          escaping them. Binding to [innerHTML] runs the value through Angular's built-in
-          DOM sanitizer, which strips anything not on its safe-tag/safe-attribute allowlist
-          -- e.g. a <script> or an onerror= handler -- rather than trusting the string
-          outright. Do not reach for DomSanitizer.bypassSecurityTrustHtml here: that is
-          exactly the stored-XSS bug this app previously shipped. There is no user-facing
-          way to edit a bio from this portal.
+          escaping them. Two gates, in this order: toBioHtml() narrows the value to that
+          formatting (dropping media, so a bio cannot pull in an external image), and
+          binding to [innerHTML] then runs it through Angular's DOM sanitizer, which strips
+          anything not on its safe-tag/safe-attribute allowlist -- e.g. a <script> or an
+          onerror= handler -- rather than trusting the string outright. Do not reach for
+          DomSanitizer.bypassSecurityTrustHtml here: that is exactly the stored-XSS bug this
+          app previously shipped. There is no user-facing way to edit a bio from this portal.
         -->
-        <div class="provider-profile__bio" [innerHTML]="loadedProvider.bio" data-testid="provider-bio"></div>
+        <div class="provider-profile__bio" [innerHTML]="bioHtml()" data-testid="provider-bio"></div>
       </article>
     }
   </section>

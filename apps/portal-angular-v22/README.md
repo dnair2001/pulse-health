@@ -34,7 +34,14 @@ File names keep the `.service.ts` / `.page.ts` / `.component.ts` suffixes rather
 style guide's shorter form, so each file lines up one-to-one with its AngularJS counterpart
 while both apps are in the repo.
 
-One behaviour deliberately differs. `X-Request-Id` falls back to a non-crypto id where
+Two behaviours deliberately differ.
+
+A bio's markup is narrowed before it is rendered (see the invariant below), so a bio carrying an
+image renders as text here while the AngularJS app renders the image. Every bio the API seeds
+today is text plus that one leftover `<img>` payload, so the visible difference is a broken-image
+icon that no longer appears.
+
+`X-Request-Id` falls back to a non-crypto id where
 `crypto.randomUUID` is unavailable — it only exists in a secure context, so the AngularJS
 interceptor throws and every screen renders the generic error banner when the dev server is
 reached over plain http on a LAN address. The id is diagnostic, never authorization, so the
@@ -62,3 +69,16 @@ Angular's built-in DOM sanitizer. The Angular 17 version of this app called
 rewrite fixed it with `ng-bind-html` + `ngSanitize`. **Do not reintroduce any
 `bypassSecurityTrust*` call on this field.** `provider-profile.page.spec.ts` renders a bio
 carrying an `<img onerror=…>` payload and asserts the handler never reaches the DOM.
+
+Two more gates sit around that sanitizer, because a sanitizer allowlist is not an image-source
+policy — Angular's keeps `img`/`picture`/`source` and lets `srcset` through without a URL check,
+which is the same gap CVE-2024-8372 and CVE-2024-8373 describe in AngularJS's sanitizer:
+
+- `bio-html.ts`'s `toBioHtml()` reduces a bio to inline formatting (`b`, `strong`, `i`, `em`,
+  `u`, `br`, `p`, `span`, `ul`, `ol`, `li`) with no attributes at all, dropping media, scripts
+  and embeds outright and unwrapping anything else. It only ever removes markup, and its output
+  is still bound through `[innerHTML]`.
+- `index.html` sends `img-src 'self' data:` in a CSP, so a media reference that somehow reached
+  the DOM still cannot be fetched. Scripts stay on `'self'` with no `unsafe-eval`, which an AOT
+  build satisfies and an AngularJS bundle (its `$parse` compiles expressions with `new
+  Function`) cannot.
