@@ -1,0 +1,13 @@
+<div
+  [class]="cssClass()"
+  [attr.role]="role()"
+  [attr.data-variant]="variant()"
+  data-testid="alert-banner"
+>
+  <span class="alert__message">{{ message() }}</span>
+  @if (dismissible()) {
+    <button type="button" class="alert__dismiss" aria-label="Dismiss" (click)="dismissed.emit()">
+      ×
+    </button>
+  }
+</div>

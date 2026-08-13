@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pulse Health · Patient portal</title>
+  <!--
+    Second line of defence behind toBioHtml(): even if provider-authored HTML ever reached
+    the DOM with a media reference in it, the browser refuses to fetch it cross-origin.
+    'unsafe-inline' is listed for styles only because Angular injects component styles as
+    <style> elements; scripts stay on 'self', which an AOT build (no eval, no runtime
+    template compilation) satisfies -- the AngularJS app cannot make that claim.
+  -->
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+  >
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+  <ph-root></ph-root>
+</body>
+</html>

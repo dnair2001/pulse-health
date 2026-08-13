@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Keeps the "133 pytest + 64 Karma = 197" claim in AGENTS.md, README.md,
+// Keeps the "170 pytest + 12 Karma + 30 Vitest = 212" claim in AGENTS.md, README.md,
 // CONTRIBUTING.md and .github/pull_request_template.md honest, the same way
 // apps/mock-api/scripts/generate_openapi.py + the CI diff check keep openapi.json honest:
 // this recomputes the live numbers and fails loudly, with a clear diff, the moment any of
@@ -71,11 +71,32 @@ function countKarma() {
   return Number(match[1]);
 }
 
+function countVitest() {
+  let output;
+  try {
+    output = run('npm', ['run', 'test:ci'], {
+      cwd: path.join(ROOT, 'apps/portal-angular-v22'),
+    });
+  } catch (err) {
+    output = stripAnsi((err.stdout ?? '') + (err.stderr ?? ''));
+  }
+  // "Tests  30 passed (30)" when green, "Tests  1 failed | 29 passed (30)" when not: the
+  // parenthesised number is the total either way, which is what the docs quote.
+  const match = output.match(/Tests\s+[^\n]*\((\d+)\)/);
+  if (!match) {
+    throw new Error(
+      `Could not find "Tests ... (N)" in Vitest output. Output tail:\n${output.slice(-2000)}`,
+    );
+  }
+  return Number(match[1]);
+}
+
 // Matches every documented variant seen in this repo:
-//   "133 pytest + 64 Karma = 197"
-//   "133 pytest + 64 Karma = **197**"   (AGENTS.md's markdown bold)
-//   "133 + 64 = 197 tests"               (README.md's terser phrasing)
-const COUNT_PATTERN = /(\d+)\s*(?:pytest)?\s*\+\s*(\d+)\s*(?:Karma)?\s*=\s*\*{0,2}(\d+)\*{0,2}/;
+//   "170 pytest + 12 Karma + 30 Vitest = 212"
+//   "170 pytest + 12 Karma + 30 Vitest = **212**"   (AGENTS.md's markdown bold)
+//   "170 + 12 + 30 = 212 tests"                      (README.md's terser phrasing)
+const COUNT_PATTERN =
+  /(\d+)\s*(?:pytest)?\s*\+\s*(\d+)\s*(?:Karma)?\s*\+\s*(\d+)\s*(?:Vitest)?\s*=\s*\*{0,2}(\d+)\*{0,2}/;
 
 const DOC_FILES = ['AGENTS.md', 'README.md', 'CONTRIBUTING.md', '.github/pull_request_template.md'];
 
@@ -83,28 +104,33 @@ function extractDocumentedCounts(relativePath) {
   const text = readFileSync(path.join(ROOT, relativePath), 'utf8');
   const match = text.match(COUNT_PATTERN);
   if (!match) {
-    throw new Error(`Could not find a "N pytest + N Karma = N" style count in ${relativePath}`);
+    throw new Error(
+      `Could not find a "N pytest + N Karma + N Vitest = N" style count in ${relativePath}`,
+    );
   }
-  const [, pytest, karma, total] = match.map(Number);
-  return { pytest, karma, total };
+  const [, pytest, karma, vitest, total] = match.map(Number);
+  return { pytest, karma, vitest, total };
 }
 
 function main() {
-  console.log('Collecting live test counts (this runs both suites once)...\n');
+  console.log('Collecting live test counts (this runs every suite once)...\n');
 
   const live = {
     pytest: countPytest(),
     karma: countKarma(),
+    vitest: countVitest(),
   };
-  live.total = live.pytest + live.karma;
+  live.total = live.pytest + live.karma + live.vitest;
 
-  console.log(`Live: ${live.pytest} pytest + ${live.karma} Karma = ${live.total}\n`);
+  console.log(
+    `Live: ${live.pytest} pytest + ${live.karma} Karma + ${live.vitest} Vitest = ${live.total}\n`,
+  );
 
   const mismatches = [];
 
   for (const relativePath of DOC_FILES) {
     const documented = extractDocumentedCounts(relativePath);
-    for (const key of ['pytest', 'karma', 'total']) {
+    for (const key of ['pytest', 'karma', 'vitest', 'total']) {
       if (documented[key] !== live[key]) {
         mismatches.push({
           file: relativePath,
@@ -122,9 +148,9 @@ function main() {
       console.error(`  ${file}: documented ${field} = ${documented}, live ${field} = ${expected}`);
     }
     console.error(
-      `\nUpdate the affected file(s) to say "${live.pytest} pytest + ${live.karma} Karma = ` +
-        `${live.total}" (or the equivalent phrasing already used in that file) and re-run ` +
-        'this script.',
+      `\nUpdate the affected file(s) to say "${live.pytest} pytest + ${live.karma} Karma + ` +
+        `${live.vitest} Vitest = ${live.total}" (or the equivalent phrasing already used in ` +
+        'that file) and re-run this script.',
     );
     process.exitCode = 1;
     return;

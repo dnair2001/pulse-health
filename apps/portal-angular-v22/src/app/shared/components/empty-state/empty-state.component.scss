@@ -1,0 +1,16 @@
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1.5rem;
+  background: var(--ph-surface);
+  border: 1px dashed var(--ph-border);
+  border-radius: 0.5rem;
+  text-align: center;
+
+  &__message {
+    margin: 0;
+    color: var(--ph-muted);
+  }
+}

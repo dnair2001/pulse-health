@@ -1,0 +1,30 @@
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+
+.provider-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+
+  &:hover {
+    border-color: var(--ph-primary);
+  }
+
+  &__specialty {
+    margin: 0;
+    color: var(--ph-muted);
+    font-size: 0.875rem;
+  }
+
+  &__location {
+    margin: 0;
+    font-size: 0.8125rem;
+  }
+}

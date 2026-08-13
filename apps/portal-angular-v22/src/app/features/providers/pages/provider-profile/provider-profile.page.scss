@@ -1,0 +1,10 @@
+.provider-profile {
+  &__location {
+    margin: 0 0 0.75rem;
+    color: var(--ph-muted);
+  }
+
+  &__bio {
+    line-height: 1.6;
+  }
+}

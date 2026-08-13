@@ -1,5 +1,5 @@
 {
-  "path": ["apps/mock-api/app", "apps/portal-angular/src"],
+  "path": ["apps/mock-api/app", "apps/portal-angular/src", "apps/portal-angular-v22/src"],
   "format": ["python", "typescript", "markup"],
   "ignore": [
     "**/*.spec.ts",
