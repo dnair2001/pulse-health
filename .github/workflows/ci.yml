@@ -140,6 +140,40 @@ jobs:
         working-directory: apps/portal-angular
         run: npm run build
 
+  angular-v22:
+    name: portal-angular-v22 (eslint + tsc + vitest + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/portal-angular-v22/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/portal-angular-v22
+        run: npm ci
+
+      - name: Lint
+        working-directory: apps/portal-angular-v22
+        run: npm run lint
+
+      - name: Typecheck
+        working-directory: apps/portal-angular-v22
+        run: npm run typecheck
+
+      # Vitest runs in a Node.js/jsdom environment, so unlike the Karma suite in the job
+      # above this needs no browser binary.
+      - name: Test
+        working-directory: apps/portal-angular-v22
+        run: npm run test:ci
+
+      - name: Build
+        working-directory: apps/portal-angular-v22
+        run: npm run build
+
   quality:
     name: quality (duplicate-code budget)
     runs-on: ubuntu-latest
@@ -204,6 +238,7 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             apps/portal-angular/package-lock.json
+            apps/portal-angular-v22/package-lock.json
 
       - name: Install Chrome
         id: chrome
@@ -217,6 +252,7 @@ jobs:
           PUPPETEER_SKIP_DOWNLOAD: 'true'
         run: |
           npm ci --prefix apps/portal-angular
+          npm ci --prefix apps/portal-angular-v22
 
       - name: Check documented test counts are current
         env:
@@ -226,7 +262,7 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: [format, api, angular, quality, observability, docs-freshness]
+    needs: [format, api, angular, angular-v22, quality, observability, docs-freshness]
     if: always()
     steps:
       - name: Check job results

@@ -1,0 +1,22 @@
+.spinner {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 1.5rem;
+  color: var(--ph-muted);
+
+  &__dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 2px solid var(--ph-border);
+    border-top-color: var(--ph-primary);
+    border-radius: 50%;
+    animation: ph-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes ph-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

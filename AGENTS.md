@@ -9,13 +9,15 @@ migration can reuse verbatim:
 | App | Path | Role |
 | --- | --- | --- |
 | `mock-api` | `apps/mock-api` | FastAPI, Python 3.12. Owns all business rules and the frozen contract. |
-| `portal-angular` | `apps/portal-angular` | Angular 17 with NgModules. The deliberately period-accurate legacy app. **Reference implementation.** |
+| `portal-angular` | `apps/portal-angular` | AngularJS 1.8.x, plain JS, `ngRoute`, Karma. The deliberately period-accurate legacy app, scoped to the Provider Directory. **Reference implementation.** |
+| `portal-angular-v22` | `apps/portal-angular-v22` | Angular 22: standalone components, signals, zoneless, Vitest. The migrated app, same feature, same API. |
 
-There is no React (or other modern-framework) frontend in this repo today. There was one
-previously — this repo's history shows a completed Angular-to-React migration — and it was
-removed to restore a genuine migration backlog for demoing that migration again. If you are
-asked to port `portal-angular` to another framework, treat `docs/api-contract.md` as the
-frozen spec to build against and see "Notes for the migration phase" in README.md.
+The two frontends are both wired up and both maintained: `portal-angular-v22` is the port of
+`portal-angular`'s Provider Directory, and `portal-angular` stays in place as the reference
+implementation and the before/after comparison. Neither one needed a backend change —
+`docs/api-contract.md` is the frozen spec both build against. The four remaining domains
+(Appointments, Patient Profile, Prescriptions, Billing) are API-only in both frontends; porting
+one means writing new pages against the existing, unchanged API.
 
 ## Setup
 
@@ -34,29 +36,32 @@ Always use the root scripts. They exist so nobody has to remember per-app invoca
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | Both dev servers: API `:8000`, Angular `:4200` |
-| `npm test` | Unit suite: 170 pytest + 12 Karma = **182** |
-| `npm run test:e2e` | Builds, then runs the Playwright specs against the frontend |
-| `npm run lint` | ruff + Angular eslint, each including a complexity budget (see below) |
-| `npm run typecheck` | mypy (strict) + no-op for portal-angular (plain AngularJS/JS, no TS) |
+| `npm start` | All three dev servers: API `:8000`, AngularJS `:4200`, Angular 22 `:4201` |
+| `npm test` | Unit suite: 170 pytest + 12 Karma + 22 Vitest = **204** |
+| `npm run test:e2e` | Builds, then runs the Playwright specs against the AngularJS frontend |
+| `npm run lint` | ruff + eslint for both frontends, each including a complexity budget (see below) |
+| `npm run typecheck` | mypy (strict) + `tsc --noEmit` over portal-angular-v22 + a no-op for portal-angular (plain AngularJS/JS, no TS) |
 | `npm run format` / `format:check` | Prettier over TS/JS/JSON/YAML |
-| `npm run build` | Production bundle |
-| `npm run demo` | Builds, then serves the frontend + API on `:8080` |
+| `npm run build` | Production bundle for both frontends |
+| `npm run demo` | Builds, then serves the AngularJS frontend + API on `:8080` |
 | `npm run reset:data` | Reseeds the mock API relative to now (needs the API running) |
 | `npm run generate:openapi` | Regenerates `apps/mock-api/openapi.json` from the live schema; CI fails if it's stale |
-| `npm run check:duplication` | jscpd duplicate-code budget across both apps (`.jscpd.json`) |
+| `npm run check:duplication` | jscpd duplicate-code budget across all three source trees (`.jscpd.json`) |
 | `npm run check:doc-freshness` | Confirms this file's/README's/CONTRIBUTING's/the PR template's documented test counts still match the live suites |
 
-The frontend proxies `/api` to `localhost:8000`, so the API must be running to show data.
-Per-app variants exist for tight loops: `test:api`, `test:angular`, and the same pattern for
-`lint:`, `typecheck:` and `build:`.
+Both frontends proxy `/api` to `localhost:8000`, so the API must be running to show data.
+Per-app variants exist for tight loops: `test:api`, `test:angular` (AngularJS),
+`test:angular-v22` (Angular 22), and the same pattern for `setup:`, `start:`, `lint:`,
+`typecheck:` and `build:`.
 
 `npm run test:e2e` is deliberately **not** part of `npm test`: it needs a production build first,
 and keeping the unit suite fast matters more than a single entry point.
 
-The demo server (`apps/mock-api/demo_server.py`) serves Angular at `/` and the API at `/api`. It
-reads a pre-built bundle, so run `npm run demo` (which builds first) rather than `demo:serve`
-alone.
+The demo server (`apps/mock-api/demo_server.py`) serves the AngularJS bundle at `/` and the API
+at `/api`. It reads a pre-built bundle, so run `npm run demo` (which builds first) rather than
+`demo:serve` alone. It is part of the frozen `apps/mock-api`, so it still points at
+`apps/portal-angular`'s `dist`; serving the Angular 22 app over one port means
+`npm run build:angular-v22` plus your own static server, or `npm run start:angular-v22`.
 
 ## Static analysis, SAST and alerting
 
@@ -65,19 +70,22 @@ at (or just above) what the codebase measured when the check was added, not at s
 number, so they catch new regressions without demanding an unrelated rewrite to pass.
 
 - **Complexity** — ruff's `C90`/mccabe for mock-api (`pyproject.toml`, `max-complexity = 10`),
-  `complexity`/`max-depth`/`max-lines-per-function` in Angular's `.eslintrc.json`
+  `complexity`/`max-depth`/`max-lines-per-function` in AngularJS's `.eslintrc.json`
   (`overrides`-scoped off for spec/test files, since test callbacks trip these for reasons
   unrelated to production code quality).
 - **Dead code / unused dependencies** — `vulture` + `pip-extra-reqs` for mock-api (run directly
-  via `apps/mock-api/.venv/bin/...`; config lives in `pyproject.toml`); `knip` for the frontend
-  (`npm run lint:deadcode` in `apps/portal-angular`; `knip.json` carries the framework
+  via `apps/mock-api/.venv/bin/...`; config lives in `pyproject.toml`); `knip` for the AngularJS
+  frontend (`npm run lint:deadcode` in `apps/portal-angular`; `knip.json` carries the framework
   false-positives — Angular schematics/template-parser/puppeteer — that knip's static import
-  graph can't see).
+  graph can't see). `portal-angular-v22` has no knip config yet: its lint (angular-eslint, over
+  TypeScript **and** templates) plus `tsc --noEmit` is the whole budget there today.
 - **Duplicate code** — `jscpd` at the root (`.jscpd.json`, `npm run check:duplication`), scanning
-  both apps' source.
+  all three source trees. Expect the two frontends' templates to report a few clones against each
+  other: the port has to reproduce the AngularJS markup, so that duplication is the point rather
+  than a smell. The threshold is a total-percentage budget, and those clones sit well inside it.
 
-All of the above run in CI (see `.github/workflows/ci.yml`'s `api`/`angular`/`quality` jobs) and
-as local pre-commit hooks.
+All of the above run in CI (see `.github/workflows/ci.yml`'s `api`/`angular`/`angular-v22`/
+`quality` jobs) and as local pre-commit hooks.
 
 **SAST** — `.github/workflows/codeql.yml` runs CodeQL over `python` and `javascript-typescript`
 on every PR, push to `main`, and weekly. It is a separate workflow, not a required check in
@@ -108,15 +116,22 @@ Breaking any of these is a defect, not a style preference.
    validation are enforced in `apps/mock-api/app/domain/rules.py` and returned as typed error
    codes. The frontend surfaces those errors; it must not become the source of truth for them. A
    client-side-only guard is a bug because it can be bypassed and it makes the contract dishonest.
-3. **`apps/portal-angular` is deliberately legacy and is the reference implementation for a
-   future migration.** Do not modernize it (no standalone components, no signals, no
-   functional interceptors — see "Per-app conventions" below for the specific patterns to keep).
-   A migration to another framework must reproduce its observable behaviour exactly — same
-   labels, date formats, empty states, and punctuation (including the en dash in time ranges) —
-   not a framework-idiomatic reinterpretation of it. When this repo previously had a React port,
-   this was mechanically enforced by an equivalence spec that diffed the two frontends' rendered
-   text (`e2e/tests/equivalence.spec.ts`, now removed along with the React app); recreate an
-   equivalent check for whatever framework replaces it next.
+3. **`apps/portal-angular` is deliberately legacy and is the reference implementation for the
+   migration.** Do not modernize it (no standalone components, no signals, no functional
+   interceptors — see "Per-app conventions" below for the specific patterns to keep) and do not
+   delete it: `apps/portal-angular-v22` is only meaningful next to it. A port must reproduce its
+   observable behaviour exactly — same labels, date formats, empty states, and punctuation
+   (including the en dash in time ranges) — not a framework-idiomatic reinterpretation of it.
+   When this repo previously had a React port, this was mechanically enforced by an equivalence
+   spec that diffed the two frontends' rendered text (`e2e/tests/equivalence.spec.ts`, removed
+   along with the React app and **not yet recreated** for the Angular 22 port — the port's
+   equivalence rests on its unit specs and a manual pass today).
+4. **The provider `bio` is never trusted markup.** It is care-coordinator-authored HTML from an
+   unvetted internal tool, and rendering it through a trust-bypass API is the stored-XSS bug this
+   app already shipped once. `portal-angular` renders it with `ng-bind-html` + `ngSanitize`;
+   `portal-angular-v22` renders it with `[innerHTML]` through Angular's built-in sanitizer.
+   Neither may call `$sce.trustAsHtml` or `DomSanitizer.bypassSecurityTrust*` on it, and both
+   have a regression spec that asserts an `<img onerror=…>` payload renders inert.
 
 ## Per-app conventions
 
@@ -141,25 +156,46 @@ above only guards field *names*, not the *content* of a value it already trusts,
 one field in that schema that is unavoidably free text on the server side, so the frontend bounds
 it *before* it is ever sent: uncaught-exception handlers report `error.name` (a small,
 code-controlled value such as `TypeError`, never the exception's `.message`, which could echo
-user-entered content) — see `GlobalErrorHandler` in Angular. The frontend calls the endpoint
-through a small `reportEvent`/`checkApiHealth` module rather than posting to it directly — see
-`apps/portal-angular/src/app/core/observability/telemetry.service.ts`. It has no *visible* UI for
-this (no banner, no status indicator): it's instrumentation only.
+user-entered content) — see the `$exceptionHandler` decorator in AngularJS and
+`GlobalErrorHandler` in Angular 22. Each frontend calls the endpoint through a small
+`reportEvent`/`checkApiHealth` service rather than posting to it directly — see
+`apps/portal-angular/src/app/core/observability/telemetry.service.js` and
+`apps/portal-angular-v22/src/app/core/observability/telemetry.service.ts`. It has no *visible* UI
+for this (no banner, no status indicator): it's instrumentation only. Note the `source` field is
+a closed enum of `angular`/`react`, so events from the AngularJS app (which sends `angularjs`)
+are rejected with a 422 that the fire-and-forget caller never sees; the Angular 22 app sends
+`angular`.
 
 **`e2e/`** — Playwright, chromium only, its own `package.json`. Runs every user flow against the
 one implementation currently in the repo and resets API state around each test. See its
 `IMPLEMENTATIONS` fixture for where a second (post-migration) frontend would be added back.
 
-**`apps/portal-angular`** — Angular 17 idioms on purpose: NgModules (not standalone), lazy
-`loadChildren`, class-based HTTP interceptor, Reactive Forms, `ControlValueAccessor`. Component and
-directive selectors **must** use the `ph-` prefix; eslint fails otherwise. Do not modernize this
-app. Its datedness is the point.
+**`apps/portal-angular`** — AngularJS 1.x idioms on purpose: `angular.module` registration,
+`.component()` controllers with `$inject`, `$http` promises, `ngRoute`, an `$httpProvider`
+interceptor, `ng-bind-html` + `ngSanitize`, webpack (no Angular CLI) and Karma + Jasmine.
+Component and directive selectors **must** use the `ph-` prefix; eslint fails otherwise. Do not
+modernize this app. Its datedness is the point.
+
+**`apps/portal-angular-v22`** — the opposite brief: current Angular idioms only. Standalone
+components (no NgModules), `signal`/`computed` state, zoneless change detection (there is no
+`zone.js` dependency at all — don't add one), `inject()` over constructor parameters, `input()`/
+`output()`, `@if`/`@for` control flow, a functional `HttpInterceptorFn`, `loadComponent` routes,
+`withComponentInputBinding()` for route params, and Vitest + jsdom via `@angular/build:unit-test`.
+Component selectors keep the `ph-` prefix (`eslint.config.js`), and styles are co-located per
+component with only design tokens and shared primitives left global. File names keep the
+`.service.ts`/`.page.ts`/`.component.ts` suffixes rather than the 2025 style guide's shorter form,
+so each file lines up with its AngularJS counterpart for as long as both apps are in the repo.
 
 ## Gotchas that have cost real time
 
 - **Karma needs a Chrome binary.** `karma.conf.js` resolves one from the puppeteer cache and uses
   a `ChromeHeadlessCI` launcher with `--no-sandbox`. Set `CHROME_BIN` to override. On a bare Linux
-  image, Chrome's shared libraries may need installing before specs can run at all.
+  image, Chrome's shared libraries may need installing before specs can run at all. This applies
+  to `portal-angular` only: `portal-angular-v22` runs Vitest in jsdom and needs no browser.
+- **The Angular 22 CLI has a narrow Node floor.** It requires `^22.22.3 || ^24.15.0 || >=26.0.0`
+  and refuses to run (before printing anything about your command) on, say, Node 24.13 or any
+  Node 25. `.nvmrc` says `22`, which resolves to a qualifying release; if `ng` exits with
+  "requires a minimum Node.js version", the fix is the interpreter, not the workspace.
 - **The Python venv stores absolute paths.** Moving or renaming the repo directory breaks it.
   Re-run `npm run setup:api`.
 - **`python3` is not necessarily Python 3.12.** macOS still ships 3.9 as `/usr/bin/python3`, and

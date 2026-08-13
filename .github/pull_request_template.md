@@ -12,7 +12,7 @@ Definition of done (see [AGENTS.md](../AGENTS.md)):
 
 - [ ] `npm run lint` passes
 - [ ] `npm run typecheck` and `npm run format:check` pass
-- [ ] `npm test` passes (170 pytest + 12 Karma = 182)
+- [ ] `npm test` passes (170 pytest + 12 Karma + 22 Vitest = 204)
 - [ ] `npm run build` passes
 - [ ] `npm run check:duplication` and `npm run check:doc-freshness` pass
 
@@ -23,8 +23,10 @@ Invariants:
       ISO-8601 with `Z`, bare JSON arrays from collection endpoints, one error envelope).
 - [ ] **Business rules stayed server-side** in `apps/mock-api/app/domain/rules.py`. No
       client-side-only guard was added.
-- [ ] `apps/portal-angular` was not modernized (NgModules, class-based interceptor, `ph-`
-      selector prefix all intact).
+- [ ] `apps/portal-angular` (AngularJS) was not modernized: it stays the reference
+      implementation for the Angular 22 port in `apps/portal-angular-v22`.
+- [ ] The provider `bio` still renders through a sanitizer in both frontends. No
+      `$sce.trustAsHtml` (AngularJS) and no `DomSanitizer.bypassSecurityTrust*` (Angular).
 
 ## Verification
 

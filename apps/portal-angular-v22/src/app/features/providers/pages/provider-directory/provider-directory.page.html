@@ -1,0 +1,57 @@
+<section class="page">
+  <header class="page__header">
+    <div>
+      <h1 class="page__title">Provider directory</h1>
+      <p class="page__subtitle">Meet the clinicians at Pulse Health.</p>
+    </div>
+  </header>
+
+  <label class="field">
+    <span class="field__label">Search by name or specialty</span>
+    <input
+      #searchBox
+      type="search"
+      [value]="search()"
+      (input)="search.set(searchBox.value)"
+      placeholder="e.g. Dermatology"
+      data-testid="provider-search"
+    />
+  </label>
+
+  @if (loading()) {
+    <ph-loading-spinner message="Loading providers…" />
+  }
+
+  @if (error() && !loading()) {
+    <div class="stack">
+      <ph-alert-banner variant="error" [message]="error()!.message" [dismissible]="false" />
+      <button type="button" class="button button--ghost" (click)="load()" data-testid="retry">
+        Try again
+      </button>
+    </div>
+  }
+
+  @if (isEmpty()) {
+    <ph-empty-state
+      title="No providers match your search"
+      message="Try a different name or specialty."
+    />
+  }
+
+  @if (!loading() && !error() && filteredProviders().length > 0) {
+    <div class="provider-grid">
+      @for (provider of filteredProviders(); track provider.id) {
+        <button
+          type="button"
+          class="card provider-card"
+          (click)="viewProfile(provider)"
+          [attr.data-testid]="'provider-card-' + provider.id"
+        >
+          <h2 class="card__title">{{ provider.name }}</h2>
+          <p class="provider-card__specialty">{{ provider.specialty }}, {{ provider.credentials }}</p>
+          <p class="provider-card__location">{{ provider.locationName }}</p>
+        </button>
+      }
+    </div>
+  }
+</section>

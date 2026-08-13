@@ -1,0 +1,16 @@
+<div class="empty-state" data-testid="empty-state">
+  <h3 class="empty-state__title">{{ title() }}</h3>
+  @if (message()) {
+    <p class="empty-state__message">{{ message() }}</p>
+  }
+  @if (actionLabel()) {
+    <button
+      type="button"
+      class="button button--primary"
+      (click)="action.emit()"
+      data-testid="empty-state-action"
+    >
+      {{ actionLabel() }}
+    </button>
+  }
+</div>

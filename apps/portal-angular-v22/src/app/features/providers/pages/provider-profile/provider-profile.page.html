@@ -1,0 +1,38 @@
+@if (!loading()) {
+  <section class="page">
+    <header class="page__header">
+      <button type="button" class="button button--ghost" (click)="goBack()" data-testid="back">
+        &larr; Back to directory
+      </button>
+    </header>
+
+    @if (error()) {
+      <div class="stack">
+        <ph-alert-banner variant="error" [message]="error()!.message" [dismissible]="false" />
+      </div>
+    }
+
+    @if (provider(); as loadedProvider) {
+      <article class="card" data-testid="provider-profile">
+        <h1 class="page__title">{{ loadedProvider.name }}</h1>
+        <p class="page__subtitle">{{ loadedProvider.specialty }}, {{ loadedProvider.credentials }}</p>
+        <p class="provider-profile__location">{{ loadedProvider.locationName }}</p>
+        <!--
+          Bios come from the internal onboarding tool and may contain basic formatting
+          (<strong>, <br>) that plain interpolation would render as literal tags instead of
+          escaping them. Binding to [innerHTML] runs the value through Angular's built-in
+          DOM sanitizer, which strips anything not on its safe-tag/safe-attribute allowlist
+          -- e.g. a <script> or an onerror= handler -- rather than trusting the string
+          outright. Do not reach for DomSanitizer.bypassSecurityTrustHtml here: that is
+          exactly the stored-XSS bug this app previously shipped. There is no user-facing
+          way to edit a bio from this portal.
+        -->
+        <div class="provider-profile__bio" [innerHTML]="loadedProvider.bio" data-testid="provider-bio"></div>
+      </article>
+    }
+  </section>
+}
+
+@if (loading()) {
+  <ph-loading-spinner message="Loading provider…" />
+}
