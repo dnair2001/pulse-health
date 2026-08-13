@@ -1,14 +1,17 @@
 # Pulse Health
 
-Patient portal for a fictional digital healthcare company, used to show a legacy Angular
-frontend being modernised. A dashboard plus five patient-facing features are complete end to
-end: Appointment Scheduling, Provider Directory, Patient Profile & Demographics, Prescriptions &
-Medications, and Billing & Insurance Claims.
+Patient portal for a fictional digital healthcare company, used to show a legacy frontend being
+modernised. The backend implements five domains end to end (Appointment Scheduling, Provider
+Directory, Patient Profile & Demographics, Prescriptions & Medications, and Billing & Insurance
+Claims). The frontend is deliberately scoped down to one of them for now — the **Provider
+Directory** (search the directory, open a provider's profile) — after a from-scratch rewrite from
+Angular 17/TypeScript to AngularJS 1.x. The other four domains stay fully implemented server-side
+and are simply not exposed by the current UI.
 
 | App | What it is |
 | --- | --- |
-| `apps/portal-angular` | the legacy baseline: Angular 17 NgModules, RxJS, Karma |
-| `apps/mock-api` | FastAPI mock backing it |
+| `apps/portal-angular` | the legacy baseline: AngularJS 1.8.x, plain JS, `ngRoute`, Karma |
+| `apps/mock-api` | FastAPI mock backing it, all five domains still live |
 
 The REST contract in [`docs/api-contract.md`](docs/api-contract.md) is frozen — it is written so
 that a future migration to another frontend framework requires no backend change. `data-testid`
@@ -19,14 +22,15 @@ be ported alongside the components when that migration happens.
 
 | Layer | Choice | Why it looks like this |
 | --- | --- | --- |
-| Frontend | Angular 17.3, TypeScript 5.4 | NgModules, `HttpClientModule` and constructor injection are idiomatic here, not retrofitted |
-| Routing | Root module + lazy-loaded feature module | `appointments` ships as its own bundle |
-| Forms | Angular Reactive Forms | including a `ControlValueAccessor` slot picker |
-| Async | RxJS 7 observables | `switchMap`, `merge`, `takeUntil` teardown |
-| Styling | Component SCSS + global stylesheet | no utility framework |
-| Tests | Karma + Jasmine | the default runner for this Angular era |
+| Frontend | AngularJS 1.8.3, plain JS (no TypeScript) | component controllers registered via `.component()`, `$inject`-style DI |
+| Routing | `ngRoute` | one feature module wired into the shell today (Providers); more can be added the same way |
+| Forms | `ng-model` plus a custom `trimmedRequired` validator directive | `ngModel.$validators` covers what Reactive Forms did before |
+| Async | `$http` promises | no RxJS in this stack |
+| Sanitization | `ngSanitize` (`ng-bind-html`) | provider bios come from an unvetted onboarding tool; replaces the original Angular version's `bypassSecurityTrustHtml`, which shipped a stored-XSS bug |
+| Styling | one global stylesheet, one component-scoped SCSS file for the app shell | no utility framework |
+| Tests | Karma + Jasmine | the same runner the Angular-era app used |
 | API | FastAPI 0.141, Python 3.12 | file-backed JSON store, seeded relative to "now" |
-| API tests | pytest | rules enforced and asserted server-side |
+| API tests | pytest | rules enforced and asserted server-side, across all five domains |
 
 ## Layout
 
@@ -40,21 +44,20 @@ pulse-health/
 ├── .github/workflows/           CI per app, CodeQL, secret scan, flaky-test detection
 ├── .devcontainer/               Node 22 + Python 3.12, runs npm run setup on create
 ├── .pre-commit-config.yaml      ruff, mypy, vulture, eslint, knip, jscpd, prettier, hygiene hooks
-├── e2e/                         Playwright specs driving the frontend on one port
+├── e2e/                         Playwright specs (currently written against the pre-rewrite
+│                                app; see "Known constraints" below)
 ├── apps/
-│   ├── portal-angular/          Angular 17 patient portal
+│   ├── portal-angular/          AngularJS patient portal (webpack build, no Angular CLI)
+│   │   ├── webpack.config.js    dev server (+ /api proxy), production build, template inlining
 │   │   ├── karma.conf.js        headless Chrome, resolved from the puppeteer cache
-│   │   ├── proxy.conf.json      /api -> localhost:8000
 │   │   └── src/app/
-│   │       ├── core/            models, HTTP error interceptor, notification service
-│   │       ├── shared/          badge, spinner, empty state, alert, confirm dialog, pipe, validator
+│   │       ├── core/            HTTP error interceptor, global error handler, telemetry,
+│   │       │                    notification service
+│   │       ├── shared/          badge, spinner, empty state, alert, confirm dialog, filters,
+│   │       │                    validator directive
 │   │       └── features/
-│   │           ├── dashboard/       landing page summarising the other five features
-│   │           ├── appointments/    scheduling, rescheduling, cancelling
-│   │           ├── providers/       provider directory + profile pages
-│   │           ├── patient-profile/ demographics, contact-info edit, identity verification
-│   │           ├── prescriptions/   list, filter, refill request
-│   │           └── billing/         invoices, payments
+│   │           └── providers/       provider directory + profile pages (the only feature wired
+│   │                                into the app today)
 │   └── mock-api/                FastAPI mock
 │       ├── app/domain/          models, rules, error envelope
 │       ├── app/api/             health, providers, patients, visit types, slots, appointments,
@@ -84,7 +87,7 @@ pulse-health/
 
 ```bash
 npm install     # root tooling (concurrently)
-npm run setup   # backend venv + Angular dependencies
+npm run setup   # backend venv + frontend dependencies
 ```
 
 `npm run setup:api` looks for a Python that satisfies `apps/mock-api/pyproject.toml` rather than
@@ -99,7 +102,7 @@ PYTHON=/opt/homebrew/bin/python3.13 npm run setup:api
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | both: API on :8000, Angular on :4200 |
+| `npm start` | both: API on :8000, portal-angular on :4200 |
 | `npm run start:api` | uvicorn with reload, http://localhost:8000 (docs at `/docs`) |
 | `npm run start:angular` | webpack dev server, http://localhost:4200 |
 | `npm test` | both unit suites (170 + 12 = 182 tests) |
@@ -137,100 +140,41 @@ short-lived. It also has no file watcher, so rerun `npm run demo:build` after ch
 npm start
 ```
 
-Then open http://localhost:4200, which lands on the Dashboard: a summary of the next
-appointment, active prescriptions, the outstanding billing balance, and quick links into each
-feature below.
-
-### Appointments
-
-1. **Upcoming and past.** The Upcoming tab lists three seeded appointments. Switch to Past for a
-   completed and a cancelled visit. Note that completed visits show *"Completed visits cannot be
-   cancelled"* and expose no action buttons.
-2. **Filtering.** Filter by status and visit type. Combine with the tabs, then use *Clear
-   filters*. Filtering with no matches shows a distinct empty state.
-3. **Providers and availability.** Click *Schedule appointment* and pick a provider. Time slots
-   load for that provider only, grouped by day. Booked and past slots are never offered.
-4. **Validation.** Submit the empty form: the reason, slot, provider and visit type errors all
-   appear. A reason of only spaces is still rejected, client and server side.
-5. **Scheduling.** Complete the form and confirm. You land back on the list with a success banner
-   and the new appointment in place.
-6. **Persistence.** Reload the browser. The appointment is still there, because the API writes
-   `apps/mock-api/data/store.json` on every mutation and reloads it on boot.
-7. **Rescheduling.** Choose *Reschedule* on a scheduled appointment, pick a new time, confirm.
-   The old slot is released and the new one booked in one step.
-8. **Cancelling.** Choose *Cancel*. Nothing happens until you accept the confirmation dialog.
-9. **API error state.** Stop the API (`Ctrl+C` in the `api` pane) and reload the list. You get
-   *"Cannot reach the Pulse Health API"* plus a *Try again* button that recovers once it is back.
-10. **Double booking.** With the schedule form open on a chosen slot, book that same slot from
-    another terminal, then submit the form:
-
-    ```bash
-    SLOT=$(curl -s 'http://localhost:8000/api/slots?providerId=prv_001' | jq -r '.[0].id')
-    curl -s -X POST http://localhost:8000/api/appointments -H 'content-type: application/json' \
-      -d "{\"providerId\":\"prv_001\",\"slotId\":\"$SLOT\",\"visitType\":\"video\",\"reason\":\"Race the UI\"}"
-    ```
-
-    The form reports *"That time slot has just been taken"*, marks the slot field, and reloads
-    availability instead of silently failing.
-11. **No past bookings.** The UI never offers a past slot, and the rule is enforced server-side:
-
-    ```bash
-    curl -s -X POST http://localhost:8000/api/appointments -H 'content-type: application/json' \
-      -d '{"providerId":"prv_001","slotId":"slt_prv_001_20200101T0900","visitType":"video","reason":"Time travel"}'
-    ```
-
-12. **Back to a clean slate.** `npm run reset:data` reseeds providers, slots and appointments
-    relative to the current time.
+Then open http://localhost:4200, which redirects to `/providers` — the only route the app
+serves today.
 
 ### Provider Directory
 
 1. **Browse and search.** `/providers` lists all four providers; the search box filters by name
    or specialty client-side.
 2. **Profile.** Click a provider to see their full bio alongside their credentials and location.
-   An unknown id in the URL shows a not-found error instead of a blank page.
+   The bio is rendered with `ng-bind-html` through `ngSanitize`, so markup in it is sanitized
+   rather than trusted outright — the original Angular version bypassed sanitization here, which
+   was a stored-XSS bug.
+3. **Not found.** An unknown id in the URL shows a not-found error instead of a blank page.
+4. **API error state.** Stop the API (`Ctrl+C` in the `api` pane) and reload. You get an error
+   banner instead of a silent failure, recovering once the API is back.
+5. **Back to a clean slate.** `npm run reset:data` reseeds providers relative to the current
+   time (also reseeds the other four domains, exercised only via the API/tests today).
 
-### Patient Profile & Demographics
-
-1. **Demographics on file.** `/profile` shows the one seeded patient's contact and emergency
-   information. The SSN is shown as its last four digits only; the full value never leaves the
-   API in this view.
-2. **Editing.** *Edit* switches the read view to a reactive form. Name, date of birth, and SSN
-   are not editable — only contact and emergency-contact fields are. Server-side validation
-   errors (bad email/phone format, blank required fields) map onto the specific field.
-3. **Identity verification.** The insurance-card widget asks for the SSN and date of birth again
-   and calls a separate verification endpoint; a mismatch is rejected without exposing why.
-
-### Prescriptions & Medications
-
-1. **Active and completed.** `/prescriptions` tabs between All, Active and Completed. Each card
-   shows dosage, frequency and instructions.
-2. **Refills.** *Request refill* is disabled with an inline reason once a prescription is
-   completed, cancelled, or has no refills left; otherwise it decrements the remaining count.
-
-### Billing & Insurance Claims
-
-1. **What insurance covered.** `/billing` tabs between All, Open and Paid. Each invoice shows
-   what was billed, what insurance paid, and the resulting patient responsibility and balance,
-   computed on every read rather than stored.
-2. **Overdue.** An open invoice past its due date carries an *overdue* badge.
-3. **Paying a balance.** *Pay balance* opens an inline form pre-filled with the remaining
-   balance. A payment that exactly clears it marks the invoice paid; a partial payment reduces
-   the balance and leaves it open. Overpaying is rejected with the current balance quoted back.
+The other four domains — Appointments, Patient Profile, Prescriptions, Billing — are fully
+implemented and tested server-side (see [`docs/api-contract.md`](docs/api-contract.md)) but have
+no current AngularJS UI; the previous Angular 17 pages for them were removed as part of the
+rewrite rather than ported.
 
 ## Business rules
 
-Enforced in the API and surfaced in the UI. The appointment rules below were the first written;
-the full set for every feature, including Provider Directory, Patient Profile, Prescriptions and
-Billing, is enumerated in [`docs/api-contract.md`](docs/api-contract.md#business-rules).
+Enforced in the API regardless of what the current UI exposes. The full set for every domain —
+Appointments, Provider Directory, Patient Profile, Prescriptions, Billing — is enumerated in
+[`docs/api-contract.md`](docs/api-contract.md#business-rules). A few examples:
 
 | Rule | Where | Failure surfaced as |
 | --- | --- | --- |
 | No booking in the past | `app/domain/rules.py` | `SLOT_IN_PAST` (422) |
 | A slot cannot be booked twice | `app/domain/rules.py` | `SLOT_ALREADY_BOOKED` (409) |
-| A reason is required | API + `trimmedRequired` validator | `VALIDATION_ERROR` (422) |
 | Completed appointments cannot be cancelled | `app/domain/rules.py` | `APPOINTMENT_NOT_CANCELLABLE` (409) |
-| Scheduled appointments cancel after confirmation | `ConfirmDialogComponent` | dialog gate, then 200 |
 | Appointments survive a refresh | `app/store.py` | state reloaded from disk |
+| Provider bio is sanitized before render | `provider-profile.page.html` (`ng-bind-html` + `ngSanitize`) | unsafe markup stripped, not executed |
 
 ## Tests
 
@@ -241,41 +185,46 @@ npm test
 - **API, 170 tests.** Every rule and error code, filter and ordering behaviour, the error envelope
   shape for malformed bodies, slot freeing on cancel and swapping on reschedule, and persistence
   across a store reload, across all five domains (appointments, providers, patients,
-  prescriptions, billing). Plus observability: correlation ids, metric label cardinality, the
-  JSON log line's shape, the log scrubber's allowlist, and POST /api/telemetry's validation and
-  logging/metrics fan-out, and two tests that pin the `/api` payload and error-envelope shapes so
-  the frozen contract cannot drift.
-- **Angular, 106 tests.** Service URLs and query params, the error interceptor's normalisation
-  including network failure, the `X-Request-Id` header it stamps, and reporting failures to
-  `/api/telemetry` bounded to `error.name`, the global `ErrorHandler`, the `ControlValueAccessor`
-  slot picker, reactive form validation, the pipe and validator, plus component tests for every
-  feature page: appointments (list, schedule, reschedule), the provider directory and profile,
-  patient profile (edit, identity verification), prescriptions (tabs, refill), billing (tabs,
-  payment), and the dashboard's cross-feature summary.
+  prescriptions, billing) — the API's own test coverage was untouched by the frontend rewrite.
+  Plus observability: correlation ids, metric label cardinality, the JSON log line's shape, the
+  log scrubber's allowlist, and POST /api/telemetry's validation and logging/metrics fan-out, and
+  two tests that pin the `/api` payload and error-envelope shapes so the frozen contract cannot
+  drift.
+- **AngularJS, 12 tests.** The provider directory service (list/get by id), the directory page
+  (search/filter, loading and error states), and the profile page (load by route id, not-found
+  redirect, error state) — including a regression test that compiles the real profile template
+  against an XSS payload in the bio field and asserts the sanitizer strips it. Scoped to the one
+  feature currently wired into the app; the ~94 specs that covered the removed features were
+  deleted along with them, not ported.
 
 ```bash
 npm run test:e2e
 ```
 
-- **End to end, 27 specs.** Every user flow against one live API on one port, across all five
-  features plus the dashboard: listing, filtering, cancelling, scheduling, form validation, the
-  server-authoritative double-booking rejection, provider search and profiles, patient
-  demographics and identity verification, prescription refills, and invoice payments.
+- **End to end.** The Playwright specs in `e2e/` were written against the pre-rewrite app (five
+  features plus a dashboard) and have not been updated for the AngularJS/Providers-only scope, so
+  most of them no longer match what the frontend serves. Not run in CI today; treat as stale
+  until someone reconciles them with the current app.
 
 ## Notes for the migration phase
 
-- The API is the contract. A React port should reuse `docs/api-contract.md` verbatim; no backend
-  change is required.
-- Deliberately legacy patterns a rewrite will have to address: NgModules and lazy `loadChildren`,
-  `HttpClientModule` with a class-based `HttpInterceptor`, RxJS pipelines with manual
-  `takeUntil` teardown, `ControlValueAccessor` form integration, template-driven `*ngIf`/`*ngFor`
-  rendering, and a `BehaviorSubject` notification service standing in for shared state.
+- The API is the contract. A future frontend rewrite should reuse `docs/api-contract.md`
+  verbatim; no backend change is required.
+- The frontend already went through one rewrite in place (Angular 17/TypeScript →
+  AngularJS 1.x), scoped down to the Provider Directory feature. The other four domains'
+  Angular 17 pages were deleted rather than ported; reintroducing them means writing new
+  AngularJS pages against the existing, unchanged API.
 - `data-testid` attributes are already in place on the elements a UI test would target, so
-  behavioural tests can be ported alongside the components.
+  behavioural tests can be ported alongside the components when features are added back.
 
 ## Known constraints
 
 - Python venvs record absolute paths. After moving or renaming this repository, rerun
   `npm run setup:api`.
-- Angular 17 prints `Node.js version v22 ... (Unsupported)`. It builds, tests and serves
-  correctly; the warning is Angular 17 predating Node 22.
+- The `e2e/` Playwright suite predates the AngularJS rewrite and targets removed pages/routes;
+  see "Tests" above.
+- `apps/portal-angular`'s `shared/` module still registers a couple of AngularJS components,
+  filters, and a validator directive (`ph-confirm-dialog`, `ph-status-badge`, `titlecase`,
+  `visitTypeLabel`, `trimmedRequired`) that nothing in the current Providers-only app uses —
+  leftover from the removed Appointments/Billing features. They're harmless but dead until a
+  future feature needs them again.
